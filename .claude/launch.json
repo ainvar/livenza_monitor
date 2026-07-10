@@ -1,0 +1,26 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "curvon-web",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location C:\\Users\\pierf\\sources\\lab\\curvon; flutter run -d web-server --release --web-port=8321"
+      ],
+      "port": 8321
+    },
+    {
+      "name": "snowpark-web",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-Command",
+        "Set-Location C:\\Users\\pierf\\sources\\lab\\snowpark_run; flutter run -d web-server --release --web-port=8177"
+      ],
+      "port": 8177,
+      "autoPort": false
+    }
+  ]
+}
