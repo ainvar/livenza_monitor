@@ -90,6 +90,8 @@ class WeatherData {
     required this.hourly,
     required this.daily,
     required this.fetchedAtUtc,
+    this.dailyReliability = const {},
+    this.reliability48h,
   });
 
   final WeatherCurrent current;
@@ -100,6 +102,28 @@ class WeatherData {
   final List<DailyForecast> daily;
 
   final DateTime fetchedAtUtc;
+
+  /// Affidabilità (%) della previsione per giorno di calendario:
+  /// concordanza tra gli scenari dell'ensemble. Vuota se non disponibile.
+  final Map<DateTime, int> dailyReliability;
+
+  /// Affidabilità (%) sulla finestra delle prossime 48 ore.
+  final int? reliability48h;
+
+  /// Copia con l'affidabilità calcolata dall'ensemble.
+  WeatherData withReliability({
+    required Map<DateTime, int> daily,
+    required int? next48h,
+  }) {
+    return WeatherData(
+      current: current,
+      hourly: hourly,
+      daily: this.daily,
+      fetchedAtUtc: fetchedAtUtc,
+      dailyReliability: daily,
+      reliability48h: next48h,
+    );
+  }
 
   /// Parsa la risposta dell'API Open-Meteo (o la cache, stesso formato).
   static WeatherData? fromApiJson(
@@ -116,7 +140,24 @@ class WeatherData {
       hourly: _parseHourly(json['hourly']),
       daily: _parseDaily(json['daily']),
       fetchedAtUtc: fetchedAtUtc,
+      dailyReliability: _parseReliability(json['reliability_daily']),
+      reliability48h:
+          json['reliability_48h'] is num ? (json['reliability_48h'] as num).round() : null,
     );
+  }
+
+  /// Presente solo nella cache (l'API forecast non la fornisce).
+  static Map<DateTime, int> _parseReliability(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return const {};
+    final result = <DateTime, int>{};
+    for (final entry in raw.entries) {
+      final date = DateTime.tryParse(entry.key);
+      final value = entry.value;
+      if (date != null && value is num) {
+        result[DateTime(date.year, date.month, date.day)] = value.round();
+      }
+    }
+    return result;
   }
 
   static List<HourlyPrecipitation> _parseHourly(dynamic hourly) {
@@ -179,6 +220,11 @@ class WeatherData {
 
   Map<String, dynamic> toCacheJson() => {
         'fetchedAt': fetchedAtUtc.toIso8601String(),
+        'reliability_daily': {
+          for (final e in dailyReliability.entries)
+            e.key.toIso8601String(): e.value,
+        },
+        if (reliability48h != null) 'reliability_48h': reliability48h,
         'current': current.toCacheJson(),
         'hourly': {
           'time': [for (final h in hourly) h.time.toIso8601String()],

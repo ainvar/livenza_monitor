@@ -38,6 +38,13 @@ class AppConfig {
   /// copre le previsioni, l'API monitor i dati idrometrici).
   static const String osmerBaseUrl = 'https://dev.meteo.fvg.it/xml/stazioni';
 
+  /// Bollettini di previsione ARPA-OSMER (file `PW<yyyyMMdd>.xml`).
+  static const String osmerForecastUrl =
+      'https://dev.meteo.fvg.it/xml/previsioni';
+
+  /// Zona del bollettino OSMER in cui ricade Sacile.
+  static const String osmerZone = 'Z2'; // Alta Pianura
+
   /// API previsioni meteo Open-Meteo.
   static const String openMeteoBaseUrl =
       'https://api.open-meteo.com/v1/forecast';
@@ -45,6 +52,14 @@ class AppConfig {
   /// API storico Open-Meteo (rianalisi ERA5, dal 1940).
   static const String openMeteoArchiveUrl =
       'https://archive-api.open-meteo.com/v1/archive';
+
+  /// API ensemble Open-Meteo: più scenari dello stesso modello,
+  /// usati per stimare l'affidabilità della previsione.
+  static const String openMeteoEnsembleUrl =
+      'https://ensemble-api.open-meteo.com/v1/ensemble';
+
+  /// Modello ensemble (ICON seamless, ~40 membri).
+  static const String ensembleModel = 'icon_seamless';
 
   /// Primo anno disponibile nella rianalisi ERA5.
   static const int historyStartYear = 1940;

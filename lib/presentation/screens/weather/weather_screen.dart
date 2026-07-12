@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/theme/threshold_colors.dart';
+import '../../../data/models/osmer_bulletin.dart';
 import '../../../data/models/weather_data.dart';
 import '../../../data/repositories/weather_repository.dart';
 import '../../../domain/services/weather_code.dart';
@@ -11,10 +13,18 @@ import '../../widgets/data_status_banner.dart';
 import '../../widgets/error_body.dart';
 import 'climate_screen.dart';
 import 'history_screen.dart';
+import 'scenarios_screen.dart';
 
 final _mmFormat = NumberFormat('0.0', 'it');
 final _tempFormat = NumberFormat('0', 'it');
 final _timeFormat = DateFormat('HH:mm');
+
+/// Colore dell'affidabilità: verde se alta, giallo/arancio se bassa.
+Color _reliabilityColor(int percent) {
+  if (percent >= 80) return ThresholdColors.normal;
+  if (percent >= 65) return ThresholdColors.soglia1;
+  return ThresholdColors.soglia2;
+}
 
 /// Schermata meteo: condizioni attuali, precipitazioni e 7 giorni.
 class WeatherScreen extends ConsumerWidget {
@@ -79,6 +89,7 @@ class _WeatherBody extends StatelessWidget {
         const SizedBox(height: 12),
         _DailyCard(data: data),
         const SizedBox(height: 12),
+        const _OsmerCard(),
         Card(
           child: ListTile(
             leading: Icon(
@@ -119,7 +130,10 @@ class _WeatherBody extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           'Previsioni: Open-Meteo (open-meteo.com), punto di riferimento '
-          'Sacile. Le precipitazioni sul bacino montano possono differire.',
+          'Sacile. Le precipitazioni sul bacino montano possono differire. '
+          'L\'affidabilità è la concordanza tra i ~40 scenari del modello '
+          'ensemble (ICON) sull\'esito pioggia/non pioggia: 100% = scenari '
+          'tutti concordi, 50% = massima incertezza.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -350,6 +364,39 @@ class _PrecipitationCard extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (data.reliability48h case final rel?) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(
+                    Icons.verified_outlined,
+                    size: 18,
+                    color: _reliabilityColor(rel),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Affidabilità della previsione a 48 ore: $rel%',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: _reliabilityColor(rel),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const ScenariosScreen(),
+                  ),
+                ),
+                icon: const Icon(Icons.insights, size: 18),
+                label: const Text('Esplora gli scenari possibili'),
+              ),
+            ),
           ],
         ),
       ),
@@ -395,6 +442,132 @@ class _SumChip extends StatelessWidget {
   }
 }
 
+/// Bollettino ufficiale ARPA-OSMER per la zona di Sacile.
+/// Se il bollettino non è disponibile la card non compare.
+class _OsmerCard extends ConsumerWidget {
+  const _OsmerCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final result = ref.watch(osmerProvider).valueOrNull;
+    if (result == null) return const SizedBox.shrink();
+    final bulletin = result.bulletin;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.record_voice_over_outlined,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Il parere dei meteorologi',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Bollettino ARPA FVG — OSMER · zona Alta Pianura',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (bulletin.situazione.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  bulletin.situazione,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontStyle: FontStyle.italic,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+              for (final day in bulletin.days) _OsmerDayBlock(day: day),
+              const SizedBox(height: 12),
+              Text(
+                'Emesso il '
+                '${_dayTimeFormatOsmer.format(bulletin.issuedUtc.toLocal())}'
+                '${result.fromCache ? ' (bollettino salvato)' : ''} · '
+                'meteo.fvg © ARPA FVG — OSMER',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+final _dayTimeFormatOsmer = DateFormat('dd/MM HH:mm');
+final _osmerDateFormat = DateFormat('EEE d MMMM', 'it');
+
+class _OsmerDayBlock extends StatelessWidget {
+  const _OsmerDayBlock({required this.day});
+
+  final OsmerDay day;
+
+  String get _label {
+    final l = day.label.trim();
+    if (l.isEmpty) return _osmerDateFormat.format(day.date);
+    return '${l[0]}${l.substring(1).toLowerCase()} '
+        '(${_osmerDateFormat.format(day.date)})';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+              if (day.attendibilita case final att?)
+                Text(
+                  'attendibilità $att%',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: _reliabilityColor(att),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            day.text,
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Previsioni per i prossimi 7 giorni.
 class _DailyCard extends StatelessWidget {
   const _DailyCard({required this.data});
@@ -424,7 +597,15 @@ class _DailyCard extends StatelessWidget {
             Text('Prossimi giorni', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             for (final (i, d) in days.indexed)
-              _DailyRow(forecast: d, dayIndex: i),
+              _DailyRow(
+                forecast: d,
+                dayIndex: i,
+                reliability: data.dailyReliability[DateTime(
+                  d.date.year,
+                  d.date.month,
+                  d.date.day,
+                )],
+              ),
           ],
         ),
       ),
@@ -433,10 +614,17 @@ class _DailyCard extends StatelessWidget {
 }
 
 class _DailyRow extends StatelessWidget {
-  const _DailyRow({required this.forecast, required this.dayIndex});
+  const _DailyRow({
+    required this.forecast,
+    required this.dayIndex,
+    this.reliability,
+  });
 
   final DailyForecast forecast;
   final int dayIndex;
+
+  /// Affidabilità (%) della previsione per questo giorno, se nota.
+  final int? reliability;
 
   String get _dayLabel => switch (dayIndex) {
         0 => 'Oggi',
@@ -469,14 +657,27 @@ class _DailyRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              forecast.precipitationSum > 0 || (prob ?? 0) > 0
-                  ? '${_mmFormat.format(forecast.precipitationSum)} mm'
-                      '${prob == null ? '' : ' · $prob%'}'
-                  : '—',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  forecast.precipitationSum > 0 || (prob ?? 0) > 0
+                      ? '${_mmFormat.format(forecast.precipitationSum)} mm'
+                          '${prob == null ? '' : ' · $prob%'}'
+                      : '—',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                if (reliability case final rel?)
+                  Text(
+                    'affidabilità $rel%',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: _reliabilityColor(rel),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
             ),
           ),
           Text(
