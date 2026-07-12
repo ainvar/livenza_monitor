@@ -1,4 +1,4 @@
-package it.livenzamonitor.livenza_monitor
+﻿package it.livenzamonitor.app
 
 import io.flutter.embedding.android.FlutterActivity
 

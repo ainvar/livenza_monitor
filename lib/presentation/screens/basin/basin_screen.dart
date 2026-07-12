@@ -131,7 +131,7 @@ class _BasinMap extends ConsumerWidget {
         TileLayer(
           urlTemplate: AppConfig.mapTileUrl,
           subdomains: AppConfig.mapTileSubdomains,
-          userAgentPackageName: 'it.livenzamonitor.livenza_monitor',
+          userAgentPackageName: 'it.livenzamonitor.app',
           tileProvider: ref.watch(mapTileProviderFactoryProvider)(),
         ),
         MarkerLayer(
