@@ -1,0 +1,14 @@
+# Copia questo file come android/key.properties e compila i valori.
+# key.properties e i file .jks sono in .gitignore: NON committarli mai.
+#
+# Il keystore si crea una sola volta con:
+#   keytool -genkey -v -keystore <percorso>\livenza-release.jks \
+#     -keyalg RSA -keysize 2048 -validity 10950 -alias livenza
+#
+# ATTENZIONE: conserva keystore e password in un luogo sicuro (es. password
+# manager + backup). Se li perdi non potrai più aggiornare l'app sul Play Store.
+
+storeFile=C:\\percorso\\assoluto\\livenza-release.jks
+storePassword=LA_TUA_PASSWORD_KEYSTORE
+keyAlias=livenza
+keyPassword=LA_TUA_PASSWORD_CHIAVE
