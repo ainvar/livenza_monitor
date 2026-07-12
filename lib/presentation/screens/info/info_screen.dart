@@ -102,14 +102,14 @@ class _VersionSection extends StatefulWidget {
 }
 
 class _VersionSectionState extends State<_VersionSection> {
-  String _version = '0.1.0 (sviluppo)';
+  String _version = '1.0.0';
 
   @override
   void initState() {
     super.initState();
     PackageInfo.fromPlatform().then((info) {
       if (mounted) {
-        setState(() => _version = '${info.version} (sviluppo)');
+        setState(() => _version = info.version);
       }
     }).catchError((Object _) {
       // Plugin non disponibile (es. nei test): resta il fallback.
