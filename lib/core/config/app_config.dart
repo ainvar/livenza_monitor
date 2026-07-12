@@ -45,6 +45,14 @@ class AppConfig {
   /// Zona del bollettino OSMER in cui ricade Sacile.
   static const String osmerZone = 'Z2'; // Alta Pianura
 
+  /// Tile raster della mappa: CARTO Voyager (gratuito per uso non
+  /// commerciale, attribuzione OSM + CARTO richiesta). Non si usa
+  /// tile.openstreetmap.org: la Tile Usage Policy OSMF ne vieta
+  /// l'uso nelle app distribuite.
+  static const String mapTileUrl =
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+  static const List<String> mapTileSubdomains = ['a', 'b', 'c', 'd'];
+
   /// API previsioni meteo Open-Meteo.
   static const String openMeteoBaseUrl =
       'https://api.open-meteo.com/v1/forecast';

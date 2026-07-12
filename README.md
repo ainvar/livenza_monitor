@@ -47,10 +47,12 @@ Protezione Civile.
 
 | Dato | Fonte | Licenza |
 |---|---|---|
-| Livelli idrometrici | [Protezione Civile FVG — rete di monitoraggio](https://monitor.protezionecivile.fvg.it/) | CC BY 3.0 IT |
-| Previsioni meteo | [Open-Meteo](https://open-meteo.com/) | CC BY 4.0 |
+| Livelli idrometrici | [Protezione Civile FVG — rete di monitoraggio](https://monitor.protezionecivile.fvg.it/) | API pubblica della PA senza licenza esplicita; riuso non commerciale con attribuzione (art. 52 CAD), richiesta di conferma inviata all'ente |
+| Bollettino di previsione | [ARPA FVG - OSMER e GRN](https://www.meteo.fvg.it/) | CC BY-SA 3.0 IT |
+| Previsioni, scenari ensemble | [Open-Meteo](https://open-meteo.com/) | CC BY 4.0 |
 | Serie storica 1940–oggi | Rianalisi ERA5 (Copernicus/ECMWF) via [Open-Meteo](https://open-meteo.com/) | CC BY 4.0 |
-| Mappa | © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | ODbL |
+| Mappa (dati) | © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | ODbL |
+| Mappa (tile) | © [CARTO](https://carto.com/attributions) | Uso non commerciale con attribuzione |
 | Notizie | Feed RSS delle rispettive testate (Il Friuli, Nordest24, Il Popolo) | © delle testate |
 
 Note sui dati:
@@ -67,6 +69,7 @@ Note sui dati:
 L'app non raccoglie, memorizza né trasmette alcun dato personale. Non ci
 sono account, tracker, analytics o pubblicità. Le uniche connessioni sono
 quelle verso le fonti dati elencate sopra.
+Informativa completa: [PRIVACY.md](PRIVACY.md).
 
 ## Tecnologie
 

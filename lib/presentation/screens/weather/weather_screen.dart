@@ -501,7 +501,8 @@ class _OsmerCard extends ConsumerWidget {
                 'Emesso il '
                 '${_dayTimeFormatOsmer.format(bulletin.issuedUtc.toLocal())}'
                 '${result.fromCache ? ' (bollettino salvato)' : ''} · '
-                'meteo.fvg © ARPA FVG — OSMER',
+                'Fonte: ARPA FVG - OSMER e GRN, www.meteo.fvg.it '
+                '(CC BY-SA 3.0 IT)',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

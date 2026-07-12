@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../data/models/basin_reading.dart';
 import '../../../data/repositories/basin_repository.dart';
 import '../../../domain/services/alert_service.dart';
@@ -128,7 +129,8 @@ class _BasinMap extends ConsumerWidget {
       ),
       children: [
         TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          urlTemplate: AppConfig.mapTileUrl,
+          subdomains: AppConfig.mapTileSubdomains,
           userAgentPackageName: 'it.livenzamonitor.livenza_monitor',
           tileProvider: ref.watch(mapTileProviderFactoryProvider)(),
         ),
@@ -155,6 +157,13 @@ class _BasinMap extends ConsumerWidget {
               '© OpenStreetMap contributors',
               onTap: () => launchUrl(
                 Uri.parse('https://www.openstreetmap.org/copyright'),
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
+            TextSourceAttribution(
+              '© CARTO',
+              onTap: () => launchUrl(
+                Uri.parse('https://carto.com/attributions'),
                 mode: LaunchMode.externalApplication,
               ),
             ),

@@ -46,13 +46,46 @@ class InfoScreen extends StatelessWidget {
           const _InfoSection(
             title: 'Fonti dei dati',
             body:
-                'Dati idrometrici: Protezione Civile FVG / ARPA FVG — OSMER.\n'
-                'Previsioni meteo: Open-Meteo.\n'
-                'Mappa: © OpenStreetMap contributors.\n'
-                'Licenza dati: Creative Commons Attribuzione 3.0 Italia '
-                '(CC BY 3.0 IT).',
+                'Livelli idrometrici: Protezione Civile della Regione '
+                'Friuli Venezia Giulia (rete di monitoraggio, '
+                'monitor.protezionecivile.fvg.it).\n'
+                'Bollettino di previsione: ARPA FVG - OSMER e GRN, '
+                'www.meteo.fvg.it (licenza CC BY-SA 3.0 IT).\n'
+                'Previsioni, scenari e serie storica: Open-Meteo / '
+                'rianalisi ERA5 Copernicus (CC BY 4.0).\n'
+                'Mappa: © OpenStreetMap contributors (ODbL), '
+                'tile © CARTO.\n'
+                'Notizie: feed RSS delle rispettive testate.',
+          ),
+          const _InfoSection(
+            title: 'Privacy',
+            body:
+                'L\'app non raccoglie, memorizza né trasmette alcun dato '
+                'personale. Non ci sono account, tracciamenti, analytics o '
+                'pubblicità. Le uniche connessioni sono quelle verso le '
+                'fonti dati elencate sopra.',
           ),
           const _VersionSection(),
+          const SizedBox(height: 4),
+          // Testi delle licenze delle librerie incluse nel binario
+          // (richiesto dalle licenze BSD/Apache delle dipendenze).
+          Card(
+            margin: EdgeInsets.zero,
+            child: ListTile(
+              leading: Icon(
+                Icons.description_outlined,
+                color: theme.colorScheme.primary,
+              ),
+              title: const Text('Licenze open source'),
+              subtitle: const Text('Librerie utilizzate dall\'app'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => showLicensePage(
+                context: context,
+                applicationName: AppConfig.appName,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
