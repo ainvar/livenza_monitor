@@ -48,6 +48,7 @@ Protezione Civile.
 | Dato | Fonte | Licenza |
 |---|---|---|
 | Livelli idrometrici | [Protezione Civile FVG — rete di monitoraggio](https://monitor.protezionecivile.fvg.it/) | API pubblica della PA senza licenza esplicita; riuso non commerciale con attribuzione (art. 52 CAD), richiesta di conferma inviata all'ente |
+| Allerte regionali | [CFD — Protezione Civile FVG](https://cfd.protezionecivile.fvg.it/) | API pubblica della PA senza licenza esplicita (come sopra) |
 | Bollettino di previsione | [ARPA FVG - OSMER e GRN](https://www.meteo.fvg.it/) | CC BY-SA 3.0 IT |
 | Previsioni, scenari ensemble | [Open-Meteo](https://open-meteo.com/) | CC BY 4.0 |
 | Serie storica 1940–oggi | Rianalisi ERA5 (Copernicus/ECMWF) via [Open-Meteo](https://open-meteo.com/) | CC BY 4.0 |

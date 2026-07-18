@@ -49,6 +49,8 @@ class InfoScreen extends StatelessWidget {
                 'Livelli idrometrici: Protezione Civile della Regione '
                 'Friuli Venezia Giulia (rete di monitoraggio, '
                 'monitor.protezionecivile.fvg.it).\n'
+                'Allerte regionali: Centro Funzionale Decentrato — '
+                'Protezione Civile FVG (cfd.protezionecivile.fvg.it).\n'
                 'Bollettino di previsione: ARPA FVG - OSMER e GRN, '
                 'www.meteo.fvg.it (licenza CC BY-SA 3.0 IT).\n'
                 'Previsioni, scenari e serie storica: Open-Meteo / '

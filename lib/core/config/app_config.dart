@@ -17,6 +17,12 @@ class AppConfig {
   static const String monitorBaseUrl =
       'https://monitor.protezionecivile.fvg.it/api';
 
+  /// API del Centro Funzionale Decentrato (allerte regionali).
+  static const String cfdBaseUrl = 'https://cfd.protezionecivile.fvg.it';
+
+  /// Zona di allertamento in cui ricade Sacile (pianura occidentale).
+  static const String alertZoneKey = 'fvgA';
+
   /// Stazione idrometeo "Sacile" sulla rete di monitoraggio.
   static const int sacileStationId = 543;
 

@@ -11,6 +11,7 @@ import '../../../domain/services/alert_service.dart';
 import '../../providers/level_providers.dart';
 import '../../widgets/data_status_banner.dart';
 import '../../widgets/error_body.dart';
+import '../../widgets/regional_alert_card.dart';
 import 'amarcord_screen.dart';
 
 final _meterFormat = NumberFormat('0.00', 'it');
@@ -82,6 +83,7 @@ class _LevelBody extends ConsumerWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
+        const RegionalAlertCard(),
         _CurrentLevelCard(data: data, alert: alert, trend: trend),
         const SizedBox(height: 12),
         _ThresholdsCard(currentAlert: alert),
