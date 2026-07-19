@@ -13,11 +13,14 @@ import 'package:livenza_monitor/data/datasources/basin_datasource.dart';
 import 'package:livenza_monitor/data/datasources/level_datasource.dart';
 import 'package:livenza_monitor/data/models/basin_reading.dart';
 import 'package:livenza_monitor/data/models/basin_station.dart';
+import 'package:livenza_monitor/data/datasources/cfd_alert_datasource.dart';
 import 'package:livenza_monitor/data/datasources/news_datasource.dart';
 import 'package:livenza_monitor/data/datasources/weather_datasource.dart';
 import 'package:livenza_monitor/data/models/hydro_measure.dart';
 import 'package:livenza_monitor/data/models/news_item.dart';
+import 'package:livenza_monitor/data/models/regional_alert.dart';
 import 'package:livenza_monitor/data/models/weather_data.dart';
+import 'package:livenza_monitor/presentation/providers/alert_providers.dart';
 import 'package:livenza_monitor/presentation/providers/basin_providers.dart';
 import 'package:livenza_monitor/presentation/providers/level_providers.dart';
 import 'package:livenza_monitor/presentation/providers/news_providers.dart';
@@ -110,6 +113,35 @@ class _FakeNewsDatasource implements NewsDatasource {
       ];
 }
 
+/// Datasource allerte finto.
+class _FakeAlertDatasource implements CfdAlertDatasource {
+  _FakeAlertDatasource(this.alerts);
+
+  final List<RegionalAlert> alerts;
+
+  @override
+  Future<List<RegionalAlert>> fetchRecentAlerts() async => alerts;
+}
+
+RegionalAlert _alert({
+  required DateTime fromUtc,
+  required DateTime toUtc,
+  int level = 1,
+}) =>
+    RegionalAlert(
+      number: 21,
+      emittedUtc: fromUtc.subtract(const Duration(hours: 12)),
+      fromUtc: fromUtc,
+      toUtc: toUtc,
+      level: level,
+      phenomena: const ['temporali', 'temporali localmente forti'],
+      situation: 'Correnti instabili.',
+      forecast: 'Temporali sparsi.',
+      assessment: 'Possibili criticità locali.',
+      operationalStage: 'ATTENZIONE',
+      documentUrl: 'https://esempio.it/allerta.pdf',
+    );
+
 /// PNG trasparente 1x1, per non scaricare tile di mappa nei test.
 final _transparentPng = Uint8List.fromList(const [
   0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, //
@@ -128,6 +160,30 @@ class _FakeTileProvider extends TileProvider {
   }
 }
 
+Future<void> _pumpApp(
+  WidgetTester tester, {
+  List<RegionalAlert> alerts = const [],
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        levelDatasourceProvider.overrideWithValue(_FakeDatasource()),
+        basinDatasourceProvider.overrideWithValue(_FakeBasinDatasource()),
+        weatherDatasourceProvider.overrideWithValue(_FakeWeatherDatasource()),
+        newsDatasourceProvider.overrideWithValue(_FakeNewsDatasource()),
+        cfdAlertDatasourceProvider
+            .overrideWithValue(_FakeAlertDatasource(alerts)),
+        mapTileProviderFactoryProvider
+            .overrideWithValue(_FakeTileProvider.new),
+      ],
+      child: const LivenzaMonitorApp(),
+    ),
+  );
+  // Lascia completare i fetch finti e la scrittura in cache.
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+}
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -135,27 +191,9 @@ void main() {
 
   testWidgets('L\'app mostra il livello e lo stato di allerta',
       (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          levelDatasourceProvider.overrideWithValue(_FakeDatasource()),
-          basinDatasourceProvider.overrideWithValue(_FakeBasinDatasource()),
-          weatherDatasourceProvider
-              .overrideWithValue(_FakeWeatherDatasource()),
-          newsDatasourceProvider.overrideWithValue(_FakeNewsDatasource()),
-          mapTileProviderFactoryProvider
-              .overrideWithValue(_FakeTileProvider.new),
-        ],
-        child: const LivenzaMonitorApp(),
-      ),
-    );
+    await _pumpApp(tester);
 
-    // Primo frame: caricamento.
     expect(find.text('Livenza a Sacile'), findsOneWidget);
-
-    // Lascia completare il fetch finto e la scrittura in cache.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
 
     // Livello, stato e trend visibili.
     expect(find.text('2,81 m'), findsOneWidget);
@@ -173,5 +211,38 @@ void main() {
     expect(find.text('Meteo'), findsOneWidget);
     expect(find.text('Notizie'), findsOneWidget);
     expect(find.text('Info'), findsOneWidget);
+
+    // Senza allerte del CFD la card non compare.
+    expect(find.textContaining('ALLERTA'), findsNothing);
+  });
+
+  testWidgets('Con un\'allerta in corso la card compare in Home',
+      (tester) async {
+    final now = DateTime.now().toUtc();
+    await _pumpApp(tester, alerts: [
+      _alert(
+        fromUtc: now.subtract(const Duration(hours: 2)),
+        toUtc: now.add(const Duration(hours: 10)),
+      ),
+    ]);
+
+    expect(find.text('ALLERTA GIALLA — n. 21'), findsOneWidget);
+    expect(
+      find.text('Temporali · temporali localmente forti'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('In corso fino alle'), findsOneWidget);
+  });
+
+  testWidgets('Un\'allerta scaduta non mostra la card', (tester) async {
+    final now = DateTime.now().toUtc();
+    await _pumpApp(tester, alerts: [
+      _alert(
+        fromUtc: now.subtract(const Duration(days: 2)),
+        toUtc: now.subtract(const Duration(days: 1)),
+      ),
+    ]);
+
+    expect(find.textContaining('ALLERTA'), findsNothing);
   });
 }
