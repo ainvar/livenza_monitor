@@ -62,6 +62,14 @@ class HourlyPrecipitation {
   final double millimeters;
 }
 
+/// Temperatura oraria (°C a [time]).
+class HourlyTemperature {
+  const HourlyTemperature({required this.time, required this.celsius});
+
+  final DateTime time;
+  final double celsius;
+}
+
 /// Previsione giornaliera.
 class DailyForecast {
   const DailyForecast({
@@ -90,6 +98,7 @@ class WeatherData {
     required this.hourly,
     required this.daily,
     required this.fetchedAtUtc,
+    this.hourlyTemperature = const [],
     this.dailyReliability = const {},
     this.reliability48h,
   });
@@ -98,6 +107,9 @@ class WeatherData {
 
   /// Precipitazioni orarie, passato incluso (past_days).
   final List<HourlyPrecipitation> hourly;
+
+  /// Temperature orarie, passato incluso.
+  final List<HourlyTemperature> hourlyTemperature;
 
   final List<DailyForecast> daily;
 
@@ -120,6 +132,7 @@ class WeatherData {
       hourly: hourly,
       daily: this.daily,
       fetchedAtUtc: fetchedAtUtc,
+      hourlyTemperature: hourlyTemperature,
       dailyReliability: daily,
       reliability48h: next48h,
     );
@@ -140,10 +153,32 @@ class WeatherData {
       hourly: _parseHourly(json['hourly']),
       daily: _parseDaily(json['daily']),
       fetchedAtUtc: fetchedAtUtc,
+      // Dall'API le temperature stanno in `hourly`; nella cache in
+      // `hourly_temp` (gli array orari possono avere lunghezze diverse).
+      hourlyTemperature: _parseHourlyTemperature(
+        json['hourly_temp'] ?? json['hourly'],
+      ),
       dailyReliability: _parseReliability(json['reliability_daily']),
       reliability48h:
           json['reliability_48h'] is num ? (json['reliability_48h'] as num).round() : null,
     );
+  }
+
+  static List<HourlyTemperature> _parseHourlyTemperature(dynamic hourly) {
+    if (hourly is! Map<String, dynamic>) return const [];
+    final times = hourly['time'];
+    final values = hourly['temperature_2m'];
+    if (times is! List || values is! List) return const [];
+    final length = times.length < values.length ? times.length : values.length;
+    return [
+      for (var i = 0; i < length; i++)
+        if (times[i] is String && values[i] is num)
+          if (DateTime.tryParse(times[i] as String) case final t?)
+            HourlyTemperature(
+              time: t,
+              celsius: (values[i] as num).toDouble(),
+            ),
+    ];
   }
 
   /// Presente solo nella cache (l'API forecast non la fornisce).
@@ -229,6 +264,12 @@ class WeatherData {
         'hourly': {
           'time': [for (final h in hourly) h.time.toIso8601String()],
           'precipitation': [for (final h in hourly) h.millimeters],
+        },
+        'hourly_temp': {
+          'time': [
+            for (final h in hourlyTemperature) h.time.toIso8601String(),
+          ],
+          'temperature_2m': [for (final h in hourlyTemperature) h.celsius],
         },
         'daily': {
           'time': [for (final d in daily) d.date.toIso8601String()],

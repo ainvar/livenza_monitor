@@ -87,6 +87,8 @@ class _WeatherBody extends StatelessWidget {
         const SizedBox(height: 12),
         _PrecipitationCard(data: data),
         const SizedBox(height: 12),
+        _TemperatureCard(data: data),
+        const SizedBox(height: 12),
         _DailyCard(data: data),
         const SizedBox(height: 12),
         const _OsmerCard(),
@@ -262,13 +264,13 @@ class _PrecipitationCard extends StatelessWidget {
                 _SumChip(
                   color: pastColor,
                   label: 'ultime 24 ore',
-                  millimeters: pastSum,
+                  text: '${_mmFormat.format(pastSum)} mm',
                 ),
                 const SizedBox(width: 12),
                 _SumChip(
                   color: futureColor,
                   label: 'prossime 48 ore',
-                  millimeters: futureSum,
+                  text: '${_mmFormat.format(futureSum)} mm',
                 ),
               ],
             ),
@@ -408,12 +410,12 @@ class _SumChip extends StatelessWidget {
   const _SumChip({
     required this.color,
     required this.label,
-    required this.millimeters,
+    required this.text,
   });
 
   final Color color;
   final String label;
-  final double millimeters;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
@@ -428,13 +430,185 @@ class _SumChip extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              '${_mmFormat.format(millimeters)} mm',
+              text,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: color,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(label, style: theme.textTheme.labelSmall),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Temperature: andamento nelle ultime 24 ore e nelle prossime 48.
+class _TemperatureCard extends StatelessWidget {
+  const _TemperatureCard({required this.data});
+
+  final WeatherData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final now = data.current.time;
+    final from = now.subtract(const Duration(hours: 24));
+    final to = now.add(const Duration(hours: 48));
+
+    final window = [
+      for (final h in data.hourlyTemperature)
+        if (!h.time.isBefore(from) && !h.time.isAfter(to)) h,
+    ];
+    if (window.length < 2) return const SizedBox.shrink();
+
+    var minFuture = double.infinity;
+    var maxFuture = -double.infinity;
+    var minAll = double.infinity;
+    var maxAll = -double.infinity;
+    for (final h in window) {
+      if (h.celsius < minAll) minAll = h.celsius;
+      if (h.celsius > maxAll) maxAll = h.celsius;
+      if (!h.time.isBefore(now)) {
+        if (h.celsius < minFuture) minFuture = h.celsius;
+        if (h.celsius > maxFuture) maxFuture = h.celsius;
+      }
+    }
+
+    final pastColor = theme.colorScheme.outline;
+    final futureColor = theme.colorScheme.primary;
+
+    // Due segmenti che condividono il punto di confine, così la
+    // linea è continua ma il passato resta grigio.
+    final pastSpots = <FlSpot>[];
+    final futureSpots = <FlSpot>[];
+    for (final (i, h) in window.indexed) {
+      final spot = FlSpot(i.toDouble(), h.celsius);
+      if (h.time.isBefore(now)) {
+        pastSpots.add(spot);
+      } else {
+        if (futureSpots.isEmpty && pastSpots.isNotEmpty) {
+          pastSpots.add(spot);
+        }
+        futureSpots.add(spot);
+      }
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Temperature', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _SumChip(
+                  color: futureColor,
+                  label: 'minima prossime 48 ore',
+                  text: '${_tempFormat.format(minFuture)}°',
+                ),
+                const SizedBox(width: 12),
+                _SumChip(
+                  color: ThresholdColors.soglia2,
+                  label: 'massima prossime 48 ore',
+                  text: '${_tempFormat.format(maxFuture)}°',
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 160,
+              child: LineChart(
+                LineChartData(
+                  minY: minAll - 2,
+                  maxY: maxAll + 2,
+                  lineBarsData: [
+                    if (pastSpots.length >= 2)
+                      LineChartBarData(
+                        spots: pastSpots,
+                        color: pastColor,
+                        barWidth: 2,
+                        dotData: const FlDotData(show: false),
+                      ),
+                    if (futureSpots.length >= 2)
+                      LineChartBarData(
+                        spots: futureSpots,
+                        color: futureColor,
+                        barWidth: 2.5,
+                        dotData: const FlDotData(show: false),
+                      ),
+                  ],
+                  gridData: FlGridData(
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: theme.colorScheme.outlineVariant
+                          .withValues(alpha: 0.4),
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(),
+                    rightTitles: const AxisTitles(),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 34,
+                        getTitlesWidget: (value, meta) => Text(
+                          '${_tempFormat.format(value)}°',
+                          style: theme.textTheme.labelSmall,
+                        ),
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 28,
+                        interval: 12,
+                        getTitlesWidget: (value, meta) {
+                          final i = value.toInt();
+                          if (i < 0 || i >= window.length || i % 12 != 0) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              _timeFormat.format(window[i].time),
+                              style: theme.textTheme.labelSmall,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (spots) => [
+                        for (final s in spots)
+                          LineTooltipItem(
+                            '${_timeFormat.format(window[s.x.toInt()].time)}\n'
+                            '${_tempFormat.format(s.y)}°',
+                            const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '°C per ora: grigio = ultime 24 ore, blu = previste',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ),

@@ -73,6 +73,13 @@ class _FakeWeatherDatasource implements WeatherDatasource {
             millimeters: i.isEven ? 0.0 : 0.4,
           ),
       ],
+      hourlyTemperature: [
+        for (var i = -24; i <= 48; i++)
+          HourlyTemperature(
+            time: now.add(Duration(hours: i)),
+            celsius: 20.0 + (i % 12),
+          ),
+      ],
       daily: [
         for (var i = 0; i < 7; i++)
           DailyForecast(

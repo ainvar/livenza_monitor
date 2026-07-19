@@ -28,7 +28,7 @@ class OpenMeteoWeatherDatasource implements WeatherDatasource {
         'timezone': 'Europe/Rome',
         'current':
             'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m',
-        'hourly': 'precipitation',
+        'hourly': 'precipitation,temperature_2m',
         'daily': 'weather_code,temperature_2m_max,temperature_2m_min,'
             'precipitation_sum,precipitation_probability_max',
         // Pioggia già caduta: utile per valutare il rischio di piena.

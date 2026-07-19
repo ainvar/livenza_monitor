@@ -16,6 +16,7 @@ final _sampleJson = <String, dynamic>{
   'hourly': {
     'time': ['2026-07-01T00:00', '2026-07-01T01:00', '2026-07-01T02:00'],
     'precipitation': [0.0, 1.2, 24.1],
+    'temperature_2m': [18.5, 18.1, 17.6],
   },
   'daily': {
     'time': ['2026-07-01', '2026-07-02'],
@@ -40,6 +41,8 @@ void main() {
       expect(data.current.weatherCode, 2);
       expect(data.hourly.length, 3);
       expect(data.hourly[2].millimeters, 24.1);
+      expect(data.hourlyTemperature.length, 3);
+      expect(data.hourlyTemperature[0].celsius, 18.5);
       expect(data.daily.length, 2);
       expect(data.daily[0].weatherCode, 99);
       expect(data.daily[0].precipitationProbability, 83);
@@ -81,6 +84,11 @@ void main() {
       expect(restored!.fetchedAtUtc, original.fetchedAtUtc);
       expect(restored.current.temperature, original.current.temperature);
       expect(restored.hourly.length, original.hourly.length);
+      expect(
+        restored.hourlyTemperature.length,
+        original.hourlyTemperature.length,
+      );
+      expect(restored.hourlyTemperature[0].celsius, 18.5);
       expect(restored.daily.length, original.daily.length);
       expect(
         restored.daily[0].precipitationProbability,
