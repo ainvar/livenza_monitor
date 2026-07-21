@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
 
@@ -43,22 +44,59 @@ class InfoScreen extends StatelessWidget {
                 'Non utilizzare questa app come unica fonte per decisioni di '
                 'sicurezza.',
           ),
-          const _InfoSection(
-            title: 'Fonti dei dati',
-            body:
-                'Livelli idrometrici: Protezione Civile della Regione '
-                'Friuli Venezia Giulia (rete di monitoraggio, '
-                'monitor.protezionecivile.fvg.it).\n'
-                'Allerte regionali: Centro Funzionale Decentrato — '
-                'Protezione Civile FVG (cfd.protezionecivile.fvg.it).\n'
-                'Bollettino di previsione: ARPA FVG - OSMER e GRN, '
-                'www.meteo.fvg.it (licenza CC BY-SA 3.0 IT).\n'
-                'Previsioni, scenari e serie storica: Open-Meteo / '
-                'rianalisi ERA5 Copernicus (CC BY 4.0).\n'
-                'Mappa: © OpenStreetMap contributors (ODbL), '
-                'tile © CARTO.\n'
-                'Notizie: feed RSS delle rispettive testate.',
+          Text(
+            'Fonti dei dati',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
+          const SizedBox(height: 6),
+          Text(
+            'Tocca una fonte per aprire il sito ufficiale.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const _SourceLink(
+            label: 'Livelli idrometrici — Protezione Civile FVG, '
+                'rete di monitoraggio',
+            url: 'https://monitor.protezionecivile.fvg.it',
+          ),
+          const _SourceLink(
+            label: 'Allerte regionali — Centro Funzionale Decentrato, '
+                'Protezione Civile FVG',
+            url: 'https://cfd.protezionecivile.fvg.it',
+          ),
+          const _SourceLink(
+            label: 'Protezione Civile della Regione FVG — sito ufficiale',
+            url: 'https://www.protezionecivile.fvg.it',
+          ),
+          const _SourceLink(
+            label: 'Bollettino di previsione — ARPA FVG - OSMER e GRN '
+                '(CC BY-SA 3.0 IT)',
+            url: 'https://www.meteo.fvg.it',
+          ),
+          const _SourceLink(
+            label: 'Previsioni, scenari e serie storica — Open-Meteo / '
+                'ERA5 Copernicus (CC BY 4.0)',
+            url: 'https://open-meteo.com',
+          ),
+          const _SourceLink(
+            label: 'Mappa — © OpenStreetMap contributors (ODbL)',
+            url: 'https://www.openstreetmap.org/copyright',
+          ),
+          const _SourceLink(
+            label: 'Tile della mappa — © CARTO',
+            url: 'https://carto.com/attributions',
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Notizie: feed RSS delle rispettive testate (gli articoli '
+            'si aprono sul sito della fonte).',
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
+          ),
+          const SizedBox(height: 20),
           const _InfoSection(
             title: 'Privacy',
             body:
@@ -121,6 +159,50 @@ class _VersionSectionState extends State<_VersionSection> {
   @override
   Widget build(BuildContext context) {
     return _InfoSection(title: 'Versione', body: _version);
+  }
+}
+
+/// Riga-fonte con link al sito ufficiale.
+class _SourceLink extends StatelessWidget {
+  const _SourceLink({required this.label, required this.url});
+
+  final String label;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: () => launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.link, size: 18, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: theme.textTheme.bodyMedium),
+                  Text(
+                    url,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
