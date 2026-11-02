@@ -167,8 +167,7 @@ class HomeWeatherSummary extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
         child: ListTile(
-          onTap: () =>
-              ref.read(rootTabProvider.notifier).state = RootTab.meteo,
+          onTap: () => ref.read(rootTabProvider.notifier).state = RootTab.meteo,
           leading: ui == null
               ? const Icon(Icons.umbrella_outlined)
               : Icon(ui.icon, size: 32, color: ui.color),

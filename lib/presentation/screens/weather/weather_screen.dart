@@ -247,7 +247,10 @@ class _CurrentCard extends StatelessWidget {
     final theme = Theme.of(context);
     final current = data.current;
     final windDir = current.windDirection;
-    final ui = WeatherCodeUi.describe(current.weatherCode, isDay: current.isDay);
+    final ui = WeatherCodeUi.describe(
+      current.weatherCode,
+      isDay: current.isDay,
+    );
     final today = DateTime(
       current.time.year,
       current.time.month,
@@ -429,7 +432,9 @@ class _HourlyStripCard extends StatelessWidget {
     ];
     if (hours.length < 3) return const SizedBox.shrink();
 
-    final tempByTime = {for (final t in data.hourlyTemperature) t.time: t.celsius};
+    final tempByTime = {
+      for (final t in data.hourlyTemperature) t.time: t.celsius,
+    };
     final mmByTime = {for (final p in data.hourly) p.time: p.millimeters};
 
     return Card(
@@ -449,7 +454,10 @@ class _HourlyStripCard extends StatelessWidget {
                 separatorBuilder: (_, _) => const SizedBox(width: 6),
                 itemBuilder: (context, i) {
                   final h = hours[i];
-                  final ui = WeatherCodeUi.describe(h.weatherCode, isDay: h.isDay);
+                  final ui = WeatherCodeUi.describe(
+                    h.weatherCode,
+                    isDay: h.isDay,
+                  );
                   final temp = tempByTime[h.time];
                   final mm = mmByTime[h.time] ?? 0;
                   final prob = h.precipitationProbability ?? 0;
@@ -1306,7 +1314,10 @@ class _DailyDetails extends StatelessWidget {
           'Pioggia per circa ${hours.round()} ${hours.round() == 1 ? 'ora' : 'ore'}',
         ),
       if (f.uvIndexMax case final uv? when uv >= 3)
-        (Icons.wb_sunny_outlined, 'Indice UV massimo ${_tempFormat.format(uv)}'),
+        (
+          Icons.wb_sunny_outlined,
+          'Indice UV massimo ${_tempFormat.format(uv)}',
+        ),
       if (f.sunrise case final rise?)
         if (f.sunset case final set?)
           (

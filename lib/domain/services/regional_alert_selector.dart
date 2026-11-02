@@ -8,7 +8,10 @@ class RegionalAlertSelector {
   /// di rilevanti: si considera solo la zona di Sacile (livello > 0)
   /// e si scarta ciò che è già scaduto. Ha precedenza l'allerta in
   /// corso; altrimenti la prossima in ordine di inizio.
-  RegionalAlert? select(List<RegionalAlert> alerts, {required DateTime nowUtc}) {
+  RegionalAlert? select(
+    List<RegionalAlert> alerts, {
+    required DateTime nowUtc,
+  }) {
     RegionalAlert? active;
     RegionalAlert? upcoming;
     for (final alert in alerts) {

@@ -78,8 +78,9 @@ class RegionalAlert {
       }
     }
 
-    final details =
-        json['details'] is Map<String, dynamic> ? json['details'] as Map<String, dynamic> : const <String, dynamic>{};
+    final details = json['details'] is Map<String, dynamic>
+        ? json['details'] as Map<String, dynamic>
+        : const <String, dynamic>{};
     String text(String key) =>
         details[key] is String ? stripAlertHtml(details[key] as String) : '';
 
@@ -106,18 +107,18 @@ class RegionalAlert {
       raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
 
   Map<String, dynamic> toCacheJson() => {
-        'n': number,
-        'e': emittedUtc.toIso8601String(),
-        'f': fromUtc.toIso8601String(),
-        't': toUtc.toIso8601String(),
-        'l': level,
-        'p': phenomena,
-        'si': situation,
-        'fo': forecast,
-        'as': assessment,
-        'st': operationalStage,
-        'doc': documentUrl,
-      };
+    'n': number,
+    'e': emittedUtc.toIso8601String(),
+    'f': fromUtc.toIso8601String(),
+    't': toUtc.toIso8601String(),
+    'l': level,
+    'p': phenomena,
+    'si': situation,
+    'fo': forecast,
+    'as': assessment,
+    'st': operationalStage,
+    'doc': documentUrl,
+  };
 
   static RegionalAlert? fromCacheJson(Map<String, dynamic> json) {
     final n = json['n'];

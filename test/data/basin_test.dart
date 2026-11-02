@@ -9,53 +9,56 @@ import 'package:livenza_monitor/data/models/basin_station.dart';
 
 void main() {
   group('MonitorBasinDatasource', () {
-    test('filtra le stazioni curate e mantiene l\'ordine monte-valle',
-        () async {
-      // Payload con Sacile (543), Fiaschetti (58), una stazione fuori
-      // bacino (1) e una misura malformata.
-      final client = MockClient((request) async {
-        expect(request.url.path, contains('/sensors/24/measures/latest'));
-        return http.Response(
-          jsonEncode({
-            'result': 'OK',
-            'measures': [
-              {
-                'station_name': 'Sacile',
-                'station_id': 543,
-                'dt': '2026-07-02 15:45:00',
-                'value': 2.68,
-              },
-              {
-                'station_name': 'Adegliacco',
-                'station_id': 1,
-                'dt': '2026-07-02 15:45:00',
-                'value': 0.0,
-              },
-              {
-                'station_name': 'Fiaschetti',
-                'station_id': 58,
-                'dt': '2026-07-02 15:45:00',
-                'value': 1.63,
-              },
-              {'station_id': 121, 'dt': '2026-07-02 15:45:00'},
-            ],
-          }),
-          200,
-          headers: {'content-type': 'application/json'},
-        );
-      });
+    test(
+      'filtra le stazioni curate e mantiene l\'ordine monte-valle',
+      () async {
+        // Payload con Sacile (543), Fiaschetti (58), una stazione fuori
+        // bacino (1) e una misura malformata.
+        final client = MockClient((request) async {
+          expect(request.url.path, contains('/sensors/24/measures/latest'));
+          return http.Response(
+            jsonEncode({
+              'result': 'OK',
+              'measures': [
+                {
+                  'station_name': 'Sacile',
+                  'station_id': 543,
+                  'dt': '2026-07-02 15:45:00',
+                  'value': 2.68,
+                },
+                {
+                  'station_name': 'Adegliacco',
+                  'station_id': 1,
+                  'dt': '2026-07-02 15:45:00',
+                  'value': 0.0,
+                },
+                {
+                  'station_name': 'Fiaschetti',
+                  'station_id': 58,
+                  'dt': '2026-07-02 15:45:00',
+                  'value': 1.63,
+                },
+                {'station_id': 121, 'dt': '2026-07-02 15:45:00'},
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        });
 
-      final readings =
-          await MonitorBasinDatasource(client).fetchLatestReadings();
+        final readings = await MonitorBasinDatasource(
+          client,
+        ).fetchLatestReadings();
 
-      // Solo le 2 stazioni curate valide, ordinate da monte a valle
-      // (Fiaschetti prima di Sacile).
-      expect(readings.length, 2);
-      expect(readings[0].station.id, 58);
-      expect(readings[1].station.id, 543);
-      expect(readings[1].value, 2.68);
-      expect(readings[1].timestampUtc, DateTime.utc(2026, 7, 2, 15, 45));
-    });
+        // Solo le 2 stazioni curate valide, ordinate da monte a valle
+        // (Fiaschetti prima di Sacile).
+        expect(readings.length, 2);
+        expect(readings[0].station.id, 58);
+        expect(readings[1].station.id, 543);
+        expect(readings[1].value, 2.68);
+        expect(readings[1].timestampUtc, DateTime.utc(2026, 7, 2, 15, 45));
+      },
+    );
   });
 
   group('BasinData cache round-trip', () {

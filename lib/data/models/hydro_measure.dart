@@ -24,9 +24,9 @@ class HydroMeasure {
 
   /// Serializzazione compatta per la cache locale.
   Map<String, dynamic> toCacheJson() => {
-        't': timestampUtc.toIso8601String(),
-        'v': value,
-      };
+    't': timestampUtc.toIso8601String(),
+    'v': value,
+  };
 
   static HydroMeasure? fromCacheJson(Map<String, dynamic> json) {
     final t = json['t'];

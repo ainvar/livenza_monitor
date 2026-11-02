@@ -29,10 +29,9 @@ class MonitorBasinDatasource implements BasinDatasource {
       '/measures/latest',
     );
 
-    final response = await _client.get(
-      uri,
-      headers: {'Accept': 'application/json'},
-    ).timeout(AppConfig.httpTimeout);
+    final response = await _client
+        .get(uri, headers: {'Accept': 'application/json'})
+        .timeout(AppConfig.httpTimeout);
 
     if (response.statusCode != 200) {
       throw LevelDatasourceException('HTTP ${response.statusCode}');

@@ -41,14 +41,16 @@ class RssNewsDatasource implements NewsDatasource {
     var succeeded = 0;
     for (final feed in newsFeeds) {
       try {
-        final response = await _client.get(
-          Uri.parse(feed.url),
-          headers: {
-            'Accept': 'application/rss+xml, application/xml, text/xml',
-            // Alcuni siti bloccano i client senza User-Agent.
-            'User-Agent': 'LivenzaMonitor/0.1 (app civica; Android)',
-          },
-        ).timeout(AppConfig.httpTimeout);
+        final response = await _client
+            .get(
+              Uri.parse(feed.url),
+              headers: {
+                'Accept': 'application/rss+xml, application/xml, text/xml',
+                // Alcuni siti bloccano i client senza User-Agent.
+                'User-Agent': 'LivenzaMonitor/0.1 (app civica; Android)',
+              },
+            )
+            .timeout(AppConfig.httpTimeout);
         if (response.statusCode != 200) continue;
         items.addAll(parseRssItems(response.body, source: feed.name));
         succeeded++;

@@ -19,62 +19,48 @@ class WeatherCodeUi {
   static const _snow = Color(0xFF4FC3F7);
   static const _storm = Color(0xFF5E35B1);
 
-  static WeatherCodeUi describe(int code, {bool isDay = true}) =>
-      switch (code) {
-        0 =>
-          isDay
-              ? const WeatherCodeUi._(Icons.wb_sunny, 'Sereno', _sun)
-              : const WeatherCodeUi._(Icons.nights_stay, 'Sereno', _moon),
-        1 =>
-          isDay
-              ? const WeatherCodeUi._(
-                  Icons.wb_sunny_outlined,
-                  'Prevalentemente sereno',
-                  _sun,
-                )
-              : const WeatherCodeUi._(
-                  Icons.nights_stay_outlined,
-                  'Prevalentemente sereno',
-                  _moon,
-                ),
-        2 => const WeatherCodeUi._(
-          Icons.wb_cloudy_outlined,
-          'Parzialmente nuvoloso',
-          _cloud,
-        ),
-        3 => const WeatherCodeUi._(Icons.cloud, 'Coperto', _cloud),
-        45 || 48 => const WeatherCodeUi._(Icons.dehaze, 'Nebbia', _fog),
-        >= 51 && <= 57 => const WeatherCodeUi._(
-          Icons.grain,
-          'Pioviggine',
-          _rain,
-        ),
-        >= 61 && <= 67 => const WeatherCodeUi._(
-          Icons.water_drop,
-          'Pioggia',
-          _rain,
-        ),
-        >= 71 && <= 77 => const WeatherCodeUi._(Icons.ac_unit, 'Neve', _snow),
-        >= 80 && <= 82 => const WeatherCodeUi._(
-          Icons.umbrella,
-          'Rovesci di pioggia',
-          _rain,
-        ),
-        85 || 86 => const WeatherCodeUi._(
-          Icons.ac_unit,
-          'Rovesci di neve',
-          _snow,
-        ),
-        95 => const WeatherCodeUi._(Icons.thunderstorm, 'Temporale', _storm),
-        96 || 99 => const WeatherCodeUi._(
-          Icons.thunderstorm,
-          'Temporale con grandine',
-          _storm,
-        ),
-        _ => const WeatherCodeUi._(
-          Icons.help_outline,
-          'Non disponibile',
-          _cloud,
-        ),
-      };
+  static WeatherCodeUi describe(
+    int code, {
+    bool isDay = true,
+  }) => switch (code) {
+    0 =>
+      isDay
+          ? const WeatherCodeUi._(Icons.wb_sunny, 'Sereno', _sun)
+          : const WeatherCodeUi._(Icons.nights_stay, 'Sereno', _moon),
+    1 =>
+      isDay
+          ? const WeatherCodeUi._(
+              Icons.wb_sunny_outlined,
+              'Prevalentemente sereno',
+              _sun,
+            )
+          : const WeatherCodeUi._(
+              Icons.nights_stay_outlined,
+              'Prevalentemente sereno',
+              _moon,
+            ),
+    2 => const WeatherCodeUi._(
+      Icons.wb_cloudy_outlined,
+      'Parzialmente nuvoloso',
+      _cloud,
+    ),
+    3 => const WeatherCodeUi._(Icons.cloud, 'Coperto', _cloud),
+    45 || 48 => const WeatherCodeUi._(Icons.dehaze, 'Nebbia', _fog),
+    >= 51 && <= 57 => const WeatherCodeUi._(Icons.grain, 'Pioviggine', _rain),
+    >= 61 && <= 67 => const WeatherCodeUi._(Icons.water_drop, 'Pioggia', _rain),
+    >= 71 && <= 77 => const WeatherCodeUi._(Icons.ac_unit, 'Neve', _snow),
+    >= 80 && <= 82 => const WeatherCodeUi._(
+      Icons.umbrella,
+      'Rovesci di pioggia',
+      _rain,
+    ),
+    85 || 86 => const WeatherCodeUi._(Icons.ac_unit, 'Rovesci di neve', _snow),
+    95 => const WeatherCodeUi._(Icons.thunderstorm, 'Temporale', _storm),
+    96 || 99 => const WeatherCodeUi._(
+      Icons.thunderstorm,
+      'Temporale con grandine',
+      _storm,
+    ),
+    _ => const WeatherCodeUi._(Icons.help_outline, 'Non disponibile', _cloud),
+  };
 }

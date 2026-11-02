@@ -22,12 +22,12 @@ class NewsItem {
   DateTime get publishedLocal => publishedUtc.toLocal();
 
   Map<String, dynamic> toCacheJson() => {
-        't': title,
-        'l': link,
-        's': source,
-        'p': publishedUtc.toIso8601String(),
-        'd': summary,
-      };
+    't': title,
+    'l': link,
+    's': source,
+    'p': publishedUtc.toIso8601String(),
+    'd': summary,
+  };
 
   static NewsItem? fromCacheJson(Map<String, dynamic> json) {
     final t = json['t'];

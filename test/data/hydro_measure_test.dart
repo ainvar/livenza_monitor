@@ -20,11 +20,15 @@ void main() {
     });
 
     test('valore mancante o non numerico -> null', () {
-      expect(HydroMeasure.fromApiJson(const {'dt': '2026-07-02 15:30:00'}),
-          isNull);
       expect(
-        HydroMeasure.fromApiJson(
-            const {'dt': '2026-07-02 15:30:00', 'value': 'n/d'}),
+        HydroMeasure.fromApiJson(const {'dt': '2026-07-02 15:30:00'}),
+        isNull,
+      );
+      expect(
+        HydroMeasure.fromApiJson(const {
+          'dt': '2026-07-02 15:30:00',
+          'value': 'n/d',
+        }),
         isNull,
       );
       expect(HydroMeasure.fromApiJson(const {'value': 2.69}), isNull);
@@ -35,10 +39,7 @@ void main() {
     test('serializza e riparsa senza perdite', () {
       final data = LevelData(
         history: [
-          HydroMeasure(
-            timestampUtc: DateTime.utc(2026, 7, 2, 15),
-            value: 2.68,
-          ),
+          HydroMeasure(timestampUtc: DateTime.utc(2026, 7, 2, 15), value: 2.68),
           HydroMeasure(
             timestampUtc: DateTime.utc(2026, 7, 2, 15, 15),
             value: 2.69,

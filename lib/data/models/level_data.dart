@@ -16,9 +16,9 @@ class LevelData {
   bool get isEmpty => history.isEmpty;
 
   Map<String, dynamic> toCacheJson() => {
-        'fetchedAt': fetchedAtUtc.toIso8601String(),
-        'measures': [for (final m in history) m.toCacheJson()],
-      };
+    'fetchedAt': fetchedAtUtc.toIso8601String(),
+    'measures': [for (final m in history) m.toCacheJson()],
+  };
 
   static LevelData? fromCacheJson(Map<String, dynamic> json) {
     final fetchedAt = json['fetchedAt'];

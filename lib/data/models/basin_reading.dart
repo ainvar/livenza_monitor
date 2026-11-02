@@ -18,10 +18,10 @@ class BasinReading {
   DateTime get timestampLocal => timestampUtc.toLocal();
 
   Map<String, dynamic> toCacheJson() => {
-        'id': station.id,
-        'v': value,
-        't': timestampUtc.toIso8601String(),
-      };
+    'id': station.id,
+    'v': value,
+    't': timestampUtc.toIso8601String(),
+  };
 
   static BasinReading? fromCacheJson(Map<String, dynamic> json) {
     final id = json['id'];
@@ -69,9 +69,9 @@ class BasinData {
   }
 
   Map<String, dynamic> toCacheJson() => {
-        'fetchedAt': fetchedAtUtc.toIso8601String(),
-        'readings': [for (final r in readings) r.toCacheJson()],
-      };
+    'fetchedAt': fetchedAtUtc.toIso8601String(),
+    'readings': [for (final r in readings) r.toCacheJson()],
+  };
 
   static BasinData? fromCacheJson(Map<String, dynamic> json) {
     final fetchedAt = json['fetchedAt'];

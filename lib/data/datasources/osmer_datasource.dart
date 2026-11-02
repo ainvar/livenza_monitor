@@ -33,9 +33,7 @@ class XmlOsmerDatasource implements OsmerDatasource {
         '${AppConfig.osmerForecastUrl}/PW${_fileDate.format(date)}.xml',
       );
       try {
-        final response = await _client.get(uri).timeout(
-              AppConfig.httpTimeout,
-            );
+        final response = await _client.get(uri).timeout(AppConfig.httpTimeout);
         if (response.statusCode != 200) {
           lastError = LevelDatasourceException('HTTP ${response.statusCode}');
           continue;
@@ -64,10 +62,12 @@ OsmerBulletin parseOsmerBulletin(String xml) {
     throw const LevelDatasourceException('Bollettino senza previsioni');
   }
 
-  final issued = _parseBulletinDate(_childText(previsioni, 'emissione')) ??
+  final issued =
+      _parseBulletinDate(_childText(previsioni, 'emissione')) ??
       DateTime.now().toUtc();
-  final situazione =
-      decodeOsmerText(_childText(previsioni, 'SITUAZIONEGENERALE_TESTO'));
+  final situazione = decodeOsmerText(
+    _childText(previsioni, 'SITUAZIONEGENERALE_TESTO'),
+  );
 
   final days = <OsmerDay>[];
   for (final scadenza in document.findAllElements('scadenza')) {
@@ -128,8 +128,9 @@ DateTime? _parseDate(String? raw) {
 
 /// Emissione: "11-07-2026 12:58:00 UTC".
 DateTime? _parseBulletinDate(String raw) {
-  final m = RegExp(r'^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})')
-      .firstMatch(raw);
+  final m = RegExp(
+    r'^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})',
+  ).firstMatch(raw);
   if (m == null) return null;
   return DateTime.utc(
     int.parse(m.group(3)!),

@@ -50,8 +50,10 @@ void main() {
       // Prima scadenza: usa la zona Z2 con la sua attendibilità.
       expect(b.days[0].date, DateTime(2026, 7, 12));
       expect(b.days[0].label, 'DOMANI');
-      expect(b.days[0].text,
-          'Cielo sereno, farà caldo, possibilità di temporali.');
+      expect(
+        b.days[0].text,
+        'Cielo sereno, farà caldo, possibilità di temporali.',
+      );
       expect(b.days[0].attendibilita, 75);
 
       // Seconda scadenza: Z2 vuota -> ripiego sul testo regionale.

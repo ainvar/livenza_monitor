@@ -75,7 +75,8 @@ class WeatherCurrent {
     'relative_humidity_2m': humidity,
     'weather_code': weatherCode,
     'wind_speed_10m': windSpeed,
-    if (apparentTemperature != null) 'apparent_temperature': apparentTemperature,
+    if (apparentTemperature != null)
+      'apparent_temperature': apparentTemperature,
     'is_day': isDay ? 1 : 0,
     if (windDirection != null) 'wind_direction_10m': windDirection,
     if (windGusts != null) 'wind_gusts_10m': windGusts,

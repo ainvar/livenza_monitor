@@ -33,10 +33,9 @@ class MonitorLevelDatasource implements LevelDatasource {
       '/sensors/${AppConfig.sacileHydroSensorId}/measures',
     ).replace(queryParameters: {'from': _dtFormat.format(from)});
 
-    final response = await _client.get(
-      uri,
-      headers: {'Accept': 'application/json'},
-    ).timeout(AppConfig.httpTimeout);
+    final response = await _client
+        .get(uri, headers: {'Accept': 'application/json'})
+        .timeout(AppConfig.httpTimeout);
 
     if (response.statusCode != 200) {
       throw LevelDatasourceException('HTTP ${response.statusCode}');

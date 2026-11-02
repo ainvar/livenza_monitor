@@ -16,10 +16,10 @@ class OsmerBulletin {
   final List<OsmerDay> days;
 
   Map<String, dynamic> toCacheJson() => {
-        'issued': issuedUtc.toIso8601String(),
-        'situazione': situazione,
-        'days': [for (final d in days) d.toCacheJson()],
-      };
+    'issued': issuedUtc.toIso8601String(),
+    'situazione': situazione,
+    'days': [for (final d in days) d.toCacheJson()],
+  };
 
   static OsmerBulletin? fromCacheJson(Map<String, dynamic> json) {
     final issued = json['issued'];
@@ -62,11 +62,11 @@ class OsmerDay {
   final int? attendibilita;
 
   Map<String, dynamic> toCacheJson() => {
-        'date': date.toIso8601String(),
-        'label': label,
-        'text': text,
-        if (attendibilita != null) 'att': attendibilita,
-      };
+    'date': date.toIso8601String(),
+    'label': label,
+    'text': text,
+    if (attendibilita != null) 'att': attendibilita,
+  };
 
   static OsmerDay? fromCacheJson(Map<String, dynamic> json) {
     final date = json['date'];

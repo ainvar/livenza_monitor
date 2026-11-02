@@ -43,11 +43,13 @@ class OpenMeteoHistoryDatasource implements HistoryDatasource {
       },
     );
 
-    final response = await _client.get(
-      uri,
-      headers: {'Accept': 'application/json'},
-      // La risposta è grande (~1.5 MB): timeout più generoso.
-    ).timeout(AppConfig.httpTimeout * 4);
+    final response = await _client
+        .get(
+          uri,
+          headers: {'Accept': 'application/json'},
+          // La risposta è grande (~1.5 MB): timeout più generoso.
+        )
+        .timeout(AppConfig.httpTimeout * 4);
 
     if (response.statusCode != 200) {
       throw LevelDatasourceException('HTTP ${response.statusCode}');
@@ -65,10 +67,7 @@ class OpenMeteoHistoryDatasource implements HistoryDatasource {
     final precip = daily['precipitation_sum'];
     final tMean = daily['temperature_2m_mean'];
     final tMax = daily['temperature_2m_max'];
-    if (times is! List ||
-        precip is! List ||
-        tMean is! List ||
-        tMax is! List) {
+    if (times is! List || precip is! List || tMean is! List || tMax is! List) {
       throw const LevelDatasourceException('Serie giornaliera mancante');
     }
 

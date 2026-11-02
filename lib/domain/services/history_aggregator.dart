@@ -59,9 +59,11 @@ class HistoryAggregator {
     for (var month = 1; month <= 12; month++) {
       var sum = 0.0;
       var count = 0;
-      for (var year = AppConfig.climatologyStartYear;
-          year <= AppConfig.climatologyEndYear;
-          year++) {
+      for (
+        var year = AppConfig.climatologyStartYear;
+        year <= AppConfig.climatologyEndYear;
+        year++
+      ) {
         final total = monthSums[(year, month)];
         if (total != null) {
           sum += total;
@@ -83,9 +85,12 @@ class HistoryAggregator {
       cumulative += mm;
       currentYearCumulative.add(
         CumulativePoint(
-          dayOfYear: DateTime.utc(date.year, date.month, date.day)
-                  .difference(startOfYear)
-                  .inDays +
+          dayOfYear:
+              DateTime.utc(
+                date.year,
+                date.month,
+                date.day,
+              ).difference(startOfYear).inDays +
               1,
           millimeters: cumulative,
         ),
@@ -142,8 +147,7 @@ class HistoryAggregator {
         baselineCount++;
       }
     }
-    final baselineTemp =
-        baselineCount == 0 ? 0.0 : baselineSum / baselineCount;
+    final baselineTemp = baselineCount == 0 ? 0.0 : baselineSum / baselineCount;
 
     // Giorni molto caldi per anno (conteggio 0 incluso).
     final hotDays = [

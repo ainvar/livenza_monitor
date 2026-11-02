@@ -45,8 +45,10 @@ class DayPrecipitation {
   final DateTime date;
   final double millimeters;
 
-  Map<String, dynamic> toJson() =>
-      {'d': date.toIso8601String(), 'mm': millimeters};
+  Map<String, dynamic> toJson() => {
+    'd': date.toIso8601String(),
+    'mm': millimeters,
+  };
 
   static DayPrecipitation? fromJson(Map<String, dynamic> json) {
     final d = json['d'];
@@ -122,17 +124,17 @@ class WeatherHistory {
   final DateTime fetchedAtUtc;
 
   Map<String, dynamic> toCacheJson() => {
-        'years': [for (final y in yearTotals) y.toJson()],
-        'climatology': climatologyCumulative,
-        'currentYear': currentYear,
-        'cumulative': [for (final c in currentYearCumulative) c.toJson()],
-        'topDays': [for (final d in topDays) d.toJson()],
-        'temps': [for (final t in annualMeanTemp) t.toJson()],
-        'baselineTemp': baselineTemp,
-        'hotDays': [for (final h in hotDays) h.toJson()],
-        'lastDataDate': lastDataDate.toIso8601String(),
-        'fetchedAt': fetchedAtUtc.toIso8601String(),
-      };
+    'years': [for (final y in yearTotals) y.toJson()],
+    'climatology': climatologyCumulative,
+    'currentYear': currentYear,
+    'cumulative': [for (final c in currentYearCumulative) c.toJson()],
+    'topDays': [for (final d in topDays) d.toJson()],
+    'temps': [for (final t in annualMeanTemp) t.toJson()],
+    'baselineTemp': baselineTemp,
+    'hotDays': [for (final h in hotDays) h.toJson()],
+    'lastDataDate': lastDataDate.toIso8601String(),
+    'fetchedAt': fetchedAtUtc.toIso8601String(),
+  };
 
   static WeatherHistory? fromCacheJson(Map<String, dynamic> json) {
     final years = json['years'];

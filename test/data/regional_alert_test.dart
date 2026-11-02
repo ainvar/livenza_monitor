@@ -9,34 +9,33 @@ Map<String, dynamic> _item({
   String from = '2026-07-17T22:00:00.000Z',
   String to = '2026-07-18T21:59:00.000Z',
   int levelA = 1,
-}) =>
-    {
-      'id': 649,
-      'number': number,
-      'status': status,
-      'dt_emitted': '2026-07-17T10:30:00.000Z',
-      'dt_from': from,
-      'dt_to': to,
-      'details': {
-        'current_situation': 'Correnti <b>instabili</b>.',
-        'weather_forecast': '<b>Sabato</b>: temporali.',
-        'assessment': 'POSSIBILI CRISI LOCALI.',
-        'operational_stage': 'ATTENZIONE',
-      },
-      'zones': {
-        'fvgA': {
-          'alert_level': levelA,
-          'phenomenons': [
-            {'type': 'temporali', 'value': 'temporali'},
-            {'type': 'temporali', 'value': 'temporali localmente forti'},
-            {'type': 'temporali', 'value': 'temporali'},
-          ],
-        },
-        'fvgB': {'alert_level': 2, 'phenomenons': []},
-      },
-      'document_link': '/docs/alerts/2026/Allerta_regionale_21-2026.pdf',
-      'full_name': 'Nome Operatore',
-    };
+}) => {
+  'id': 649,
+  'number': number,
+  'status': status,
+  'dt_emitted': '2026-07-17T10:30:00.000Z',
+  'dt_from': from,
+  'dt_to': to,
+  'details': {
+    'current_situation': 'Correnti <b>instabili</b>.',
+    'weather_forecast': '<b>Sabato</b>: temporali.',
+    'assessment': 'POSSIBILI CRISI LOCALI.',
+    'operational_stage': 'ATTENZIONE',
+  },
+  'zones': {
+    'fvgA': {
+      'alert_level': levelA,
+      'phenomenons': [
+        {'type': 'temporali', 'value': 'temporali'},
+        {'type': 'temporali', 'value': 'temporali localmente forti'},
+        {'type': 'temporali', 'value': 'temporali'},
+      ],
+    },
+    'fvgB': {'alert_level': 2, 'phenomenons': []},
+  },
+  'document_link': '/docs/alerts/2026/Allerta_regionale_21-2026.pdf',
+  'full_name': 'Nome Operatore',
+};
 
 void main() {
   group('RegionalAlert.fromApiJson', () {
@@ -66,46 +65,48 @@ void main() {
     const selector = RegionalAlertSelector();
 
     test('allerta in corso ha precedenza su quella futura', () {
-      final current = RegionalAlert.fromApiJson(_item(
-        number: 20,
-        from: '2026-07-16T22:00:00.000Z',
-        to: '2026-07-17T21:59:00.000Z',
-      ))!;
+      final current = RegionalAlert.fromApiJson(
+        _item(
+          number: 20,
+          from: '2026-07-16T22:00:00.000Z',
+          to: '2026-07-17T21:59:00.000Z',
+        ),
+      )!;
       final next = RegionalAlert.fromApiJson(_item(number: 21))!;
 
-      final chosen = selector.select(
-        [next, current],
-        nowUtc: DateTime.utc(2026, 7, 17, 12),
-      );
+      final chosen = selector.select([
+        next,
+        current,
+      ], nowUtc: DateTime.utc(2026, 7, 17, 12));
 
       expect(chosen!.number, 20);
     });
 
     test('senza allerta in corso sceglie la prossima', () {
       final next = RegionalAlert.fromApiJson(_item(number: 21))!;
-      final chosen = selector.select(
-        [next],
-        nowUtc: DateTime.utc(2026, 7, 17, 12),
-      );
+      final chosen = selector.select([
+        next,
+      ], nowUtc: DateTime.utc(2026, 7, 17, 12));
       expect(chosen!.number, 21);
     });
 
     test('scarta scadute e zone non interessate', () {
-      final expired = RegionalAlert.fromApiJson(_item(
-        number: 19,
-        from: '2026-07-10T22:00:00.000Z',
-        to: '2026-07-11T21:59:00.000Z',
-      ))!;
-      final notMyZone = RegionalAlert.fromApiJson(_item(
-        number: 22,
-        levelA: 0,
-      ))!;
+      final expired = RegionalAlert.fromApiJson(
+        _item(
+          number: 19,
+          from: '2026-07-10T22:00:00.000Z',
+          to: '2026-07-11T21:59:00.000Z',
+        ),
+      )!;
+      final notMyZone = RegionalAlert.fromApiJson(
+        _item(number: 22, levelA: 0),
+      )!;
 
       expect(
-        selector.select(
-          [expired, notMyZone],
-          nowUtc: DateTime.utc(2026, 7, 17, 12),
-        ),
+        selector.select([
+          expired,
+          notMyZone,
+        ], nowUtc: DateTime.utc(2026, 7, 17, 12)),
         isNull,
       );
     });

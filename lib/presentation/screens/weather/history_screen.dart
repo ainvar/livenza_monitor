@@ -192,8 +192,9 @@ class _CurrentVsClimateCard extends StatelessWidget {
                   gridData: FlGridData(
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (_) => FlLine(
-                      color: theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.4),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.4,
+                      ),
                       strokeWidth: 1,
                     ),
                   ),
@@ -221,8 +222,9 @@ class _CurrentVsClimateCard extends StatelessWidget {
                           if (day <= 0 || day > 365) {
                             return const SizedBox.shrink();
                           }
-                          final date = DateTime(data.currentYear)
-                              .add(Duration(days: day - 1));
+                          final date = DateTime(
+                            data.currentYear,
+                          ).add(Duration(days: day - 1));
                           return Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
@@ -246,7 +248,8 @@ class _CurrentVsClimateCard extends StatelessWidget {
                 const SizedBox(width: 16),
                 _LegendDot(
                   color: climateColor,
-                  label: 'media ${AppConfig.climatologyStartYear}–'
+                  label:
+                      'media ${AppConfig.climatologyStartYear}–'
                       '${AppConfig.climatologyEndYear}',
                 ),
               ],
@@ -349,8 +352,9 @@ class _AnnualCard extends StatelessWidget {
                   gridData: FlGridData(
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (_) => FlLine(
-                      color: theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.4),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.4,
+                      ),
                       strokeWidth: 1,
                     ),
                   ),

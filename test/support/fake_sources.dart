@@ -234,7 +234,9 @@ WeatherData richWeatherData() {
       HourlyForecast(
         time: t,
         weatherCode: code,
-        precipitationProbability: mm > 0 ? (55 + mm * 8).clamp(0, 95).round() : 8,
+        precipitationProbability: mm > 0
+            ? (55 + mm * 8).clamp(0, 95).round()
+            : 8,
         windSpeed: 6 + 4 * math.sin(i / 7) + (mm > 3 ? 12 : 0),
         isDay: isDay,
       ),
@@ -261,7 +263,9 @@ WeatherData richWeatherData() {
         temperatureMin: 6 + d * 0.4 - (d == 1 ? 2 : 0),
         temperatureMax: 15 + d * 0.5 - (d == 1 ? 4 : 0),
         precipitationSum: sum,
-        precipitationProbability: sum > 0 ? (40 + sum * 2).clamp(0, 95).round() : 10,
+        precipitationProbability: sum > 0
+            ? (40 + sum * 2).clamp(0, 95).round()
+            : 10,
         sunrise: date.add(const Duration(hours: 6, minutes: 52)),
         sunset: date.add(const Duration(hours: 16, minutes: 55)),
         windSpeedMax: 12 + d * 2.0 + (d == 1 ? 14 : 0),
@@ -365,15 +369,18 @@ class RichHistoryDatasource implements HistoryDatasource {
     final rnd = math.Random(1940);
     final result = <RawDailyWeather>[];
     for (var year = 1940; year <= now.year; year++) {
-      for (var i = 0;; i++) {
+      for (var i = 0; ; i++) {
         final d = DateTime(year, 1, 1 + i);
         if (d.year != year) break;
         if (d.isAfter(now.subtract(const Duration(days: 5)))) break;
         final season = math.sin((i - 100) / 365 * 2 * math.pi);
         final warming = (year - 1940) * 0.022;
-        final tMean = 12.5 + 9.5 * season + warming + rnd.nextDouble() * 3 - 1.5;
+        final tMean =
+            12.5 + 9.5 * season + warming + rnd.nextDouble() * 3 - 1.5;
         final rain = rnd.nextDouble() < 0.3
-            ? math.pow(rnd.nextDouble(), 2.2) * 42 * (year == 1966 && i > 300 && i < 310 ? 4 : 1)
+            ? math.pow(rnd.nextDouble(), 2.2) *
+                  42 *
+                  (year == 1966 && i > 300 && i < 310 ? 4 : 1)
             : 0.0;
         result.add((
           date: d,

@@ -40,5 +40,5 @@ class RegionalAlertNotifier extends AsyncNotifier<AlertResult> {
 
 final regionalAlertProvider =
     AsyncNotifierProvider<RegionalAlertNotifier, AlertResult>(
-  RegionalAlertNotifier.new,
-);
+      RegionalAlertNotifier.new,
+    );

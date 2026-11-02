@@ -21,13 +21,13 @@ class HttpCfdAlertDatasource implements CfdAlertDatasource {
 
   @override
   Future<List<RegionalAlert>> fetchRecentAlerts() async {
-    final uri = Uri.parse('${AppConfig.cfdBaseUrl}/api/alerts')
-        .replace(queryParameters: {'limit': '5'});
+    final uri = Uri.parse(
+      '${AppConfig.cfdBaseUrl}/api/alerts',
+    ).replace(queryParameters: {'limit': '5'});
 
-    final response = await _client.get(
-      uri,
-      headers: {'Accept': 'application/json'},
-    ).timeout(AppConfig.httpTimeout);
+    final response = await _client
+        .get(uri, headers: {'Accept': 'application/json'})
+        .timeout(AppConfig.httpTimeout);
 
     if (response.statusCode != 200) {
       throw LevelDatasourceException('HTTP ${response.statusCode}');

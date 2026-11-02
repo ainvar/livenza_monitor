@@ -161,8 +161,9 @@ class _AnomalyCard extends StatelessWidget {
                     getDrawingHorizontalLine: (value) => FlLine(
                       color: value == 0
                           ? theme.colorScheme.outline
-                          : theme.colorScheme.outlineVariant
-                              .withValues(alpha: 0.4),
+                          : theme.colorScheme.outlineVariant.withValues(
+                              alpha: 0.4,
+                            ),
                       strokeWidth: value == 0 ? 1.5 : 1,
                     ),
                   ),
@@ -286,8 +287,9 @@ class _MeanTempCard extends StatelessWidget {
                   gridData: FlGridData(
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (_) => FlLine(
-                      color: theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.4),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.4,
+                      ),
                       strokeWidth: 1,
                     ),
                   ),
@@ -390,8 +392,9 @@ class _HotDaysCard extends StatelessWidget {
                   gridData: FlGridData(
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (_) => FlLine(
-                      color: theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.4),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.4,
+                      ),
                       strokeWidth: 1,
                     ),
                   ),

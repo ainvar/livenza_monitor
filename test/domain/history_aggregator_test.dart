@@ -12,8 +12,7 @@ void main() {
     double? mm,
     double? tMean,
     double? tMax,
-  }) =>
-      (date: date, precipitation: mm, tMean: tMean, tMax: tMax);
+  }) => (date: date, precipitation: mm, tMean: tMean, tMax: tMax);
 
   /// Serie sintetica: tutti i giorni di [year]. Le date sono costruite
   /// per indice (non con add di 24 ore) per evitare slittamenti al
@@ -25,7 +24,7 @@ void main() {
     double tMax = 18,
   }) {
     final result = <RawDailyWeather>[];
-    for (var i = 0;; i++) {
+    for (var i = 0; ; i++) {
       final d = DateTime(year, 1, 1 + i);
       if (d.year != year) break;
       result.add(day(d, mm: mm, tMean: tMean, tMax: tMax));
@@ -38,8 +37,7 @@ void main() {
       final raw = [
         ...fullYear(2024, mm: 1.0), // 366 giorni (bisestile) -> 366 mm
         ...fullYear(2025, mm: 2.0), // 365 giorni -> 730 mm
-        for (var i = 0; i < 10; i++)
-          day(DateTime(2026, 1, 1 + i), mm: 5.0),
+        for (var i = 0; i < 10; i++) day(DateTime(2026, 1, 1 + i), mm: 5.0),
       ];
 
       final h = aggregator.aggregate(raw, fetchedAtUtc: fetchedAt);
@@ -54,8 +52,7 @@ void main() {
     test('cumulata anno corrente e ultima data disponibile', () {
       final raw = [
         ...fullYear(2025, mm: 1.0),
-        for (var i = 0; i < 10; i++)
-          day(DateTime(2026, 1, 1 + i), mm: 5.0),
+        for (var i = 0; i < 10; i++) day(DateTime(2026, 1, 1 + i), mm: 5.0),
         // Coda recente senza dato (ritardo ERA5): va ignorata.
         day(DateTime(2026, 1, 11)),
         day(DateTime(2026, 1, 12)),
@@ -112,8 +109,7 @@ void main() {
         // Fuori baseline, più caldo.
         ...fullYear(2024, tMean: 15.0),
         // Anno con pochi dati: escluso dalla media annua.
-        for (var d = 1; d <= 20; d++)
-          day(DateTime(2000, 1, d), tMean: 10.0),
+        for (var d = 1; d <= 20; d++) day(DateTime(2000, 1, d), tMean: 10.0),
         day(DateTime(2026, 1, 1), mm: 0.0),
       ];
 
@@ -150,9 +146,7 @@ void main() {
       ];
       // Sovrascrive 12 giorni di luglio 2024 con massime a 32 °C.
       for (var d = 0; d < 12; d++) {
-        final idx = raw.indexWhere(
-          (r) => r.date == DateTime(2024, 7, 1 + d),
-        );
+        final idx = raw.indexWhere((r) => r.date == DateTime(2024, 7, 1 + d));
         raw[idx] = day(DateTime(2024, 7, 1 + d), tMax: 32.0);
       }
 
@@ -169,8 +163,7 @@ void main() {
     test('serializza e riparsa senza perdite', () {
       final raw = [
         ...fullYear(2024, mm: 1.0, tMean: 13.0, tMax: 25.0),
-        for (var i = 0; i < 5; i++)
-          day(DateTime(2026, 1, 1 + i), mm: 2.0),
+        for (var i = 0; i < 5; i++) day(DateTime(2026, 1, 1 + i), mm: 2.0),
       ];
       final original = aggregator.aggregate(raw, fetchedAtUtc: fetchedAt);
 
@@ -179,10 +172,7 @@ void main() {
       expect(restored, isNotNull);
       expect(restored!.currentYear, original.currentYear);
       expect(restored.yearTotals.length, original.yearTotals.length);
-      expect(
-        restored.climatologyCumulative,
-        original.climatologyCumulative,
-      );
+      expect(restored.climatologyCumulative, original.climatologyCumulative);
       expect(
         restored.currentYearCumulative.length,
         original.currentYearCumulative.length,
