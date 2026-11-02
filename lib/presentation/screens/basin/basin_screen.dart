@@ -7,25 +7,27 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../data/models/basin_reading.dart';
+import '../../../data/models/basin_station.dart';
 import '../../../data/repositories/basin_repository.dart';
 import '../../../domain/services/alert_service.dart';
 import '../../providers/basin_providers.dart';
+import '../../providers/favorite_stations_provider.dart';
 import '../../providers/level_providers.dart';
 import '../../widgets/data_status_banner.dart';
 import '../../widgets/error_body.dart';
+import '../../widgets/favorite_station_button.dart';
+import '../../widgets/station_freshness.dart';
+import 'station_detail_screen.dart';
 
 final _meterFormat = NumberFormat('0.00', 'it');
 final _dayTimeFormat = DateFormat('dd/MM HH:mm');
 
-/// Schermata del bacino: mappa e ultime letture degli idrometri
-/// del bacino del Livenza (da monte a valle).
 class BasinScreen extends ConsumerWidget {
   const BasinScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(basinProvider);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bacino'),
@@ -63,32 +65,64 @@ class BasinScreen extends ConsumerWidget {
 
 class _BasinBody extends ConsumerWidget {
   const _BasinBody({required this.result});
-
   final BasinResult result;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final readings = result.data.readings;
-
+    final readings = {for (final r in result.data.readings) r.station.id: r};
+    final favoritesState = ref.watch(favoriteStationsProvider);
+    final favorites = favoritesState.valueOrNull ?? <int>{};
+    final preferred = basinStations.where((s) => favorites.contains(s.id));
+    final others = basinStations.where((s) => !favorites.contains(s.id));
+    final missing = basinStations.length - readings.length;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
+        if (preferred.isNotEmpty) ...[
+          Text('Le tue stazioni', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          for (final station in preferred)
+            _StationTile(station: station, reading: readings[station.id]),
+          const SizedBox(height: 8),
+        ],
         ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            height: 300,
-            child: _BasinMap(readings: readings),
-          ),
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(height: 280, child: _BasinMap(readings: readings)),
         ),
+        const SizedBox(height: 16),
+        Text('Stazioni da monte a valle', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 4),
+        Text(
+          'Tocca una stazione per esplorare le ultime 48 ore. '
+          'La stella la aggiunge ai preferiti su questo dispositivo.',
+          style: theme.textTheme.bodySmall,
+        ),
+        if (favoritesState.hasError)
+          TextButton.icon(
+            onPressed: () => ref.invalidate(favoriteStationsProvider),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Riprova a caricare i preferiti'),
+          ),
+        if (missing > 0) ...[
+          const SizedBox(height: 8),
+          Text(
+            '$missing ${missing == 1 ? 'stazione senza misura' : 'stazioni senza misura'} '
+            'nell’ultimo aggiornamento.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
-        for (final reading in readings) _StationTile(reading: reading),
+        for (final station in others)
+          _StationTile(station: station, reading: readings[station.id]),
         const SizedBox(height: 8),
         Text(
           'I livelli sono riferiti allo zero idrometrico di ciascuna '
           'stazione e non sono confrontabili tra loro. '
-          'Le soglie di allerta sono note solo per Sacile.',
+          'Le soglie indicative sono impostate solo per Sacile.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -99,30 +133,34 @@ class _BasinBody extends ConsumerWidget {
   }
 }
 
-/// Mappa OpenStreetMap con i marker delle stazioni.
+void _openStation(
+  BuildContext context,
+  BasinStation station,
+  BasinReading? reading,
+) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) =>
+          StationDetailScreen(station: station, initialReading: reading),
+    ),
+  );
+}
+
 class _BasinMap extends ConsumerWidget {
   const _BasinMap({required this.readings});
-
-  final List<BasinReading> readings;
+  final Map<int, BasinReading> readings;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final alertService = ref.watch(alertServiceProvider);
-
-    final points = [
-      for (final r in readings) LatLng(r.station.lat, r.station.lon),
-    ];
-
     return FlutterMap(
       options: MapOptions(
-        initialCameraFit: points.length >= 2
-            ? CameraFit.coordinates(
-                coordinates: points,
-                padding: const EdgeInsets.all(36),
-              )
-            : const CameraFit.coordinates(
-                coordinates: [LatLng(45.95, 12.55)],
-              ),
+        maxZoom: 19,
+        initialCameraFit: CameraFit.coordinates(
+          coordinates: [for (final s in basinStations) LatLng(s.lat, s.lon)],
+          padding: const EdgeInsets.all(36),
+        ),
         interactionOptions: const InteractionOptions(
           flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
         ),
@@ -130,82 +168,97 @@ class _BasinMap extends ConsumerWidget {
       children: [
         TileLayer(
           urlTemplate: AppConfig.mapTileUrl,
-          subdomains: AppConfig.mapTileSubdomains,
           userAgentPackageName: 'it.livenzamonitor.app',
           tileProvider: ref.watch(mapTileProviderFactoryProvider)(),
+          maxNativeZoom: 19,
+          panBuffer: 0,
         ),
         MarkerLayer(
           markers: [
-            for (final r in readings)
+            for (final station in basinStations)
               Marker(
-                point: LatLng(r.station.lat, r.station.lon),
-                width: 66,
-                height: 30,
-                child: _MarkerPill(
-                  reading: r,
-                  color: r.station.isReference
-                      ? alertService.classify(r.value).color
-                      : Theme.of(context).colorScheme.primary,
-                  onTap: () => _showStationSheet(context, r, alertService),
+                point: LatLng(station.lat, station.lon),
+                width: 76,
+                height: 48,
+                child: _StationMarker(
+                  station: station,
+                  reading: readings[station.id],
+                  color: readings[station.id] == null
+                      ? theme.colorScheme.outline
+                      : station.isReference
+                      ? alertService.classify(readings[station.id]!.value).color
+                      : theme.colorScheme.primary,
                 ),
               ),
           ],
         ),
-        RichAttributionWidget(
-          attributions: [
-            TextSourceAttribution(
-              '© OpenStreetMap contributors',
+        Align(
+          alignment: Alignment.bottomRight,
+          child: Material(
+            color: Colors.white.withValues(alpha: 0.92),
+            child: InkWell(
               onTap: () => launchUrl(
                 Uri.parse('https://www.openstreetmap.org/copyright'),
                 mode: LaunchMode.externalApplication,
               ),
-            ),
-            TextSourceAttribution(
-              '© CARTO',
-              onTap: () => launchUrl(
-                Uri.parse('https://carto.com/attributions'),
-                mode: LaunchMode.externalApplication,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Text(
+                  '© OpenStreetMap contributors',
+                  style: TextStyle(fontSize: 11, color: Colors.black87),
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ],
     );
   }
 }
 
-/// Etichetta a pillola con il livello, usata come marker sulla mappa.
-class _MarkerPill extends StatelessWidget {
-  const _MarkerPill({
+class _StationMarker extends StatelessWidget {
+  const _StationMarker({
+    required this.station,
     required this.reading,
     required this.color,
-    required this.onTap,
   });
-
-  final BasinReading reading;
+  final BasinStation station;
+  final BasinReading? reading;
   final Color color;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: const [
-            BoxShadow(blurRadius: 4, color: Colors.black26),
-          ],
-        ),
-        child: Text(
-          '${_meterFormat.format(reading.value)} m',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+    final text = reading == null
+        ? '—'
+        : '${_meterFormat.format(reading!.value)} m';
+    return Semantics(
+      button: true,
+      label:
+          '${station.name}, ${station.river}: ${reading == null ? 'misura non disponibile' : text}. Apri storico.',
+      child: Tooltip(
+        message: '${station.name} · ${station.river}',
+        child: InkWell(
+          onTap: () => _openStation(context, station, reading),
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: const [
+                  BoxShadow(blurRadius: 4, color: Colors.black26),
+                ],
+              ),
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -213,125 +266,57 @@ class _MarkerPill extends StatelessWidget {
   }
 }
 
-/// Riga di elenco per una stazione.
 class _StationTile extends ConsumerWidget {
-  const _StationTile({required this.reading});
-
-  final BasinReading reading;
+  const _StationTile({required this.station, required this.reading});
+  final BasinStation station;
+  final BasinReading? reading;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final alertService = ref.watch(alertServiceProvider);
-    final station = reading.station;
-    final isReference = station.isReference;
-    final color = isReference
-        ? alertService.classify(reading.value).color
+    final color = station.isReference && reading != null
+        ? ref.watch(alertServiceProvider).classify(reading!.value).color
         : theme.colorScheme.primary;
-
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: () => _showStationSheet(context, reading, alertService),
-        leading: Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        title: Text(
-          station.name,
-          style: isReference
-              ? const TextStyle(fontWeight: FontWeight.bold)
-              : null,
-        ),
-        subtitle: Text(
-          '${station.river} · ${_dayTimeFormat.format(reading.timestampLocal)}',
-        ),
-        trailing: Text(
-          '${_meterFormat.format(reading.value)} m',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _openStation(context, station, reading),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(station.name, style: theme.textTheme.titleSmall),
+                    Text(station.river, style: theme.textTheme.bodySmall),
+                    const SizedBox(height: 4),
+                    StationFreshness(timestampUtc: reading?.timestampUtc),
+                    if (reading != null)
+                      Text(
+                        _dayTimeFormat.format(reading!.timestampLocal),
+                        style: theme.textTheme.labelSmall,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                reading == null
+                    ? '—'
+                    : '${_meterFormat.format(reading!.value)} m',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              FavoriteStationButton(station: station),
+            ],
           ),
         ),
       ),
     );
   }
 }
-
-/// Dettaglio stazione in bottom sheet.
-void _showStationSheet(
-  BuildContext context,
-  BasinReading reading,
-  AlertService alertService,
-) {
-  final station = reading.station;
-  showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    builder: (context) {
-      final theme = Theme.of(context);
-      final alert = station.isReference
-          ? alertService.classify(reading.value)
-          : null;
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(station.name, style: theme.textTheme.titleLarge),
-            const SizedBox(height: 4),
-            Text(
-              'Corso d\'acqua: ${station.river}',
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${_meterFormat.format(reading.value)} m',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: alert?.color ?? theme.colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(
-                    'misura delle '
-                    '${_dayTimeFormat.format(reading.timestampLocal)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (alert != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: alert.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  alert.label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: alert.color,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-    },
-  );
-}
-

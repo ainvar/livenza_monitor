@@ -35,8 +35,14 @@ class ForecastReliability {
     final daily = <DateTime, int>{};
     for (final entry in dayIndices.entries) {
       // Giorni troncati (a fine orizzonte) sarebbero fuorvianti.
-      if (entry.value.length < 20) continue;
-      daily[entry.key] = _agreement(data.members, entry.value);
+      if (entry.value.length != 24 ||
+          data.times[entry.value.first].hour != 0 ||
+          data.times[entry.value.last].hour != 23 ||
+          !_continuous(data, entry.value)) {
+        continue;
+      }
+      final members = data.completeMembers(entry.value);
+      if (members.isNotEmpty) daily[entry.key] = _agreement(members);
     }
 
     // Finestra delle prossime 48 ore.
@@ -46,23 +52,42 @@ class ForecastReliability {
             !data.times[i].isAfter(now.add(const Duration(hours: 48))))
           i,
     ];
-    final next48h = window.length < 40 ? null : _agreement(data.members, window);
+    final members = data.completeMembers(window);
+    final next48h =
+        window.length < 48 ||
+            data.times[window.first].difference(now) >
+                const Duration(hours: 1) ||
+            !_continuous(data, window) ||
+            members.isEmpty
+        ? null
+        : _agreement(members);
 
     return ReliabilityResult(daily: daily, next48h: next48h);
   }
 
   /// Percentuale di membri d'accordo con l'esito di maggioranza.
-  int _agreement(List<List<double>> members, List<int> indices) {
+  bool _continuous(EnsembleHourly data, List<int> indices) {
+    for (var i = 1; i < indices.length; i++) {
+      if (data.times[indices[i]].difference(data.times[indices[i - 1]]) !=
+          const Duration(hours: 1)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  int _agreement(List<List<double>> members) {
     var rainy = 0;
     for (final member in members) {
       var sum = 0.0;
-      for (final i in indices) {
-        sum += member[i];
+      for (final value in member) {
+        sum += value;
       }
       if (sum >= rainThresholdMm) rainy++;
     }
-    final majority =
-        rainy >= members.length - rainy ? rainy : members.length - rainy;
+    final majority = rainy >= members.length - rainy
+        ? rainy
+        : members.length - rainy;
     return (majority * 100 / members.length).round();
   }
 }

@@ -9,7 +9,7 @@ class LevelResult {
 
   final LevelData data;
 
-  /// True se la rete non era raggiungibile e i dati vengono dalla cache.
+  /// True se si mostrano gli ultimi dati salvati sul dispositivo.
   final bool fromCache;
 }
 
@@ -21,22 +21,38 @@ class LevelRepository {
   final LevelDatasource datasource;
   final LevelCache cache;
 
+  Future<LevelResult?> readCached() async {
+    try {
+      final data = await cache.read();
+      if (data == null || data.isEmpty) return null;
+      return LevelResult(data: data, fromCache: true);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<LevelResult> load() async {
     try {
       final history = await datasource.fetchHistory(
         window: AppConfig.historyWindow,
       );
+      if (history.isEmpty) {
+        throw const LevelDatasourceException('Nessuna misura disponibile');
+      }
       final data = LevelData(
         history: history,
         fetchedAtUtc: DateTime.now().toUtc(),
       );
-      await cache.save(data);
+      // Un errore del disco non deve scartare misure appena ricevute.
+      try {
+        await cache.save(data);
+      } catch (_) {
+        // Il risultato di rete rimane disponibile per questa sessione.
+      }
       return LevelResult(data: data, fromCache: false);
     } catch (_) {
-      final cached = await cache.read();
-      if (cached != null && !cached.isEmpty) {
-        return LevelResult(data: cached, fromCache: true);
-      }
+      final cached = await readCached();
+      if (cached != null) return cached;
       rethrow;
     }
   }

@@ -15,6 +15,11 @@ val keystoreProperties = Properties().apply {
     }
 }
 
+// Installazione locale affiancata alla versione firmata da Google Play.
+// Attivabile con flutter build apk -P livenzaPreview=true, senza cambiare
+// l'identità dell'app distribuita sullo store.
+val isLocalPreview = providers.gradleProperty("livenzaPreview").orNull == "true"
+
 android {
     namespace = "it.livenzamonitor.app"
     compileSdk = flutter.compileSdkVersion
@@ -27,6 +32,9 @@ android {
 
     defaultConfig {
         applicationId = "it.livenzamonitor.app"
+        if (isLocalPreview) applicationIdSuffix = ".preview"
+        manifestPlaceholders["appLabel"] =
+            if (isLocalPreview) "Livenza Monitor Anteprima" else "Livenza Monitor"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

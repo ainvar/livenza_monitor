@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../core/config/app_config.dart';
+import '../models/weather_location.dart';
 import 'level_datasource.dart';
 
 /// Serie orarie di precipitazione dei membri dell'ensemble.
@@ -14,7 +15,26 @@ class EnsembleHourly {
 
   /// Una lista di valori orari (mm) per ciascun membro;
   /// tutte lunghe quanto [times].
-  final List<List<double>> members;
+  final List<List<double?>> members;
+
+  /// Usa solo membri interamente disponibili nella finestra: una lacuna
+  /// non significa assenza di pioggia. Servono almeno 3 membri e l'80%
+  /// dell'ensemble ricevuto per evitare percentuali da pochi scenari.
+  List<List<double>> completeMembers(List<int> indices) {
+    final valid = <List<double>>[
+      for (final member in members)
+        if (indices.every(
+          (i) =>
+              i < member.length &&
+              member[i] != null &&
+              member[i]!.isFinite &&
+              member[i]! >= 0,
+        ))
+          [for (final i in indices) member[i]!],
+    ];
+    if (valid.length < 3 || valid.length < members.length * 0.8) return [];
+    return valid;
+  }
 }
 
 /// Sorgente dei dati ensemble per l'affidabilità delle previsioni.
@@ -24,16 +44,20 @@ abstract interface class EnsembleDatasource {
 
 /// Implementazione sull'API ensemble di Open-Meteo.
 class OpenMeteoEnsembleDatasource implements EnsembleDatasource {
-  OpenMeteoEnsembleDatasource(this._client);
+  OpenMeteoEnsembleDatasource(
+    this._client, {
+    this.location = WeatherLocation.sacile,
+  });
 
   final http.Client _client;
+  final WeatherLocation location;
 
   @override
   Future<EnsembleHourly> fetchHourlyPrecipitation() async {
     final uri = Uri.parse(AppConfig.openMeteoEnsembleUrl).replace(
       queryParameters: {
-        'latitude': '${AppConfig.sacileLat}',
-        'longitude': '${AppConfig.sacileLon}',
+        'latitude': '${location.lat}',
+        'longitude': '${location.lon}',
         'hourly': 'precipitation',
         'models': AppConfig.ensembleModel,
         'forecast_days': '7',
@@ -41,10 +65,9 @@ class OpenMeteoEnsembleDatasource implements EnsembleDatasource {
       },
     );
 
-    final response = await _client.get(
-      uri,
-      headers: {'Accept': 'application/json'},
-    ).timeout(AppConfig.httpTimeout);
+    final response = await _client
+        .get(uri, headers: {'Accept': 'application/json'})
+        .timeout(AppConfig.httpTimeout);
 
     if (response.statusCode != 200) {
       throw LevelDatasourceException('HTTP ${response.statusCode}');
@@ -70,19 +93,32 @@ EnsembleHourly parseEnsembleHourly(Map<String, dynamic> body) {
     throw const LevelDatasourceException('Orari mancanti');
   }
 
-  final times = <DateTime>[
-    for (final t in rawTimes)
-      if (t is String) ?DateTime.tryParse(t),
-  ];
+  // Mantiene l'indice originale: scartare un orario non deve spostare
+  // i valori delle ore successive. Ordina e rimuove orari duplicati.
+  final indexedTimes = <({int index, DateTime time})>[
+    for (var i = 0; i < rawTimes.length; i++)
+      if (rawTimes[i] is String)
+        if (DateTime.tryParse(rawTimes[i] as String) case final time?)
+          (index: i, time: time),
+  ]..sort((a, b) => a.time.compareTo(b.time));
+  final seen = <DateTime>{};
+  final entries = indexedTimes.where((e) => seen.add(e.time)).toList();
+  final times = [for (final entry in entries) entry.time];
 
-  final members = <List<double>>[];
+  final members = <List<double?>>[];
   for (final key in hourly.keys) {
-    if (!key.startsWith('precipitation')) continue;
+    if (!RegExp(r'^precipitation(?:_member\d+)?$').hasMatch(key)) continue;
     final values = hourly[key];
-    if (values is! List || values.length < times.length) continue;
+    if (values is! List) continue;
     members.add([
-      for (var i = 0; i < times.length; i++)
-        values[i] is num ? (values[i] as num).toDouble() : 0.0,
+      for (final entry in entries)
+        if (entry.index < values.length &&
+            values[entry.index] is num &&
+            (values[entry.index] as num).isFinite &&
+            (values[entry.index] as num) >= 0)
+          (values[entry.index] as num).toDouble()
+        else
+          null,
     ]);
   }
 

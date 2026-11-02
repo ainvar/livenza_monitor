@@ -12,25 +12,56 @@ final _dayTimeFormat = DateFormat('EEE d MMM HH:mm', 'it');
 
 /// Colore e nome del livello di allerta regionale.
 (Color, String) regionalAlertStyle(int level) => switch (level) {
-      >= 3 => (ThresholdColors.soglia3, 'ROSSA'),
-      2 => (ThresholdColors.soglia2, 'ARANCIONE'),
-      _ => (ThresholdColors.soglia1, 'GIALLA'),
-    };
+  >= 3 => (ThresholdColors.soglia3, 'ROSSA'),
+  2 => (ThresholdColors.soglia2, 'ARANCIONE'),
+  _ => (ThresholdColors.soglia1, 'GIALLA'),
+};
 
-/// Card mostrata in Home quando il CFD ha emesso un'allerta che
-/// interessa la zona di Sacile (in corso o imminente). In tutti gli
-/// altri casi non occupa spazio.
+/// Stato della fonte ufficiale, distinto dall'esito del controllo.
 class RegionalAlertCard extends ConsumerWidget {
   const RegionalAlertCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final result = ref.watch(regionalAlertProvider).valueOrNull;
-    if (result == null) return const SizedBox.shrink();
+    final state = ref.watch(regionalAlertProvider);
+    final result = state.valueOrNull;
+    if (result == null) {
+      return _SourceStatus(
+        message: state.hasError
+            ? 'Verifica allerte non riuscita'
+            : 'Verifica allerte ufficiali…',
+        detail: state.hasError
+            ? 'Lo stato delle allerte non è disponibile.'
+            : 'CFD Protezione Civile FVG · zona di Sacile',
+        uncertain: state.hasError,
+        onRetry: state.hasError
+            ? () => ref.read(regionalAlertProvider.notifier).refresh()
+            : null,
+      );
+    }
 
-    final alert = const RegionalAlertSelector()
-        .select(result.alerts, nowUtc: DateTime.now().toUtc());
-    if (alert == null) return const SizedBox.shrink();
+    final alert = const RegionalAlertSelector().select(
+      result.alerts,
+      nowUtc: DateTime.now().toUtc(),
+    );
+    final checked = result.checkedAtUtc;
+    final verification = checked == null
+        ? 'Data dell’ultimo controllo non disponibile'
+        : 'Controllo: ${_dayTimeFormat.format(checked.toLocal())}';
+    if (alert == null) {
+      return _SourceStatus(
+        message: result.fromCache
+            ? 'Allerte: aggiornamento non riuscito'
+            : 'Nessuna allerta ufficiale in corso o imminente',
+        detail: result.fromCache
+            ? '$verification. Nei dati salvati non risultano allerte valide.'
+            : 'CFD · zona di Sacile · $verification',
+        uncertain: result.fromCache,
+        onRetry: result.fromCache
+            ? () => ref.read(regionalAlertProvider.notifier).refresh()
+            : null,
+      );
+    }
 
     final theme = Theme.of(context);
     final (color, levelName) = regionalAlertStyle(alert.level);
@@ -38,7 +69,7 @@ class RegionalAlertCard extends ConsumerWidget {
     final validity = alert.isActiveAt(nowUtc)
         ? 'In corso fino alle ${_dayTimeFormat.format(alert.toUtc.toLocal())}'
         : 'Dalle ${_dayTimeFormat.format(alert.fromUtc.toLocal())} '
-            'alle ${_dayTimeFormat.format(alert.toUtc.toLocal())}';
+              'alle ${_dayTimeFormat.format(alert.toUtc.toLocal())}';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -82,7 +113,9 @@ class RegionalAlertCard extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'CFD Protezione Civile FVG · tocca per i dettagli',
+                        result.fromCache
+                            ? 'Bollettino salvato · $verification · tocca per i dettagli'
+                            : 'CFD Protezione Civile FVG · tocca per i dettagli',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -128,10 +161,7 @@ class RegionalAlertCard extends ConsumerWidget {
               if (alert.situation.isNotEmpty)
                 _DetailSection(title: 'Situazione', body: alert.situation),
               if (alert.forecast.isNotEmpty)
-                _DetailSection(
-                  title: 'Previsione meteo',
-                  body: alert.forecast,
-                ),
+                _DetailSection(title: 'Previsione meteo', body: alert.forecast),
               if (alert.assessment.isNotEmpty)
                 _DetailSection(
                   title: 'Possibili effetti',
@@ -169,6 +199,58 @@ class RegionalAlertCard extends ConsumerWidget {
   }
 }
 
+class _SourceStatus extends StatelessWidget {
+  const _SourceStatus({
+    required this.message,
+    required this.detail,
+    required this.uncertain,
+    this.onRetry,
+  });
+  final String message;
+  final String detail;
+  final bool uncertain;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              uncertain ? Icons.cloud_off_outlined : Icons.verified_outlined,
+              color: uncertain
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.primary,
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(message, style: theme.textTheme.titleSmall),
+                  const SizedBox(height: 3),
+                  Text(detail, style: theme.textTheme.bodySmall),
+                ],
+              ),
+            ),
+            if (onRetry != null)
+              IconButton(
+                onPressed: onRetry,
+                tooltip: 'Riprova controllo allerte',
+                icon: const Icon(Icons.refresh),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _DetailSection extends StatelessWidget {
   const _DetailSection({required this.title, required this.body});
 
@@ -190,10 +272,7 @@ class _DetailSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            body,
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
-          ),
+          Text(body, style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
         ],
       ),
     );

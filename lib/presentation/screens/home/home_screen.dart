@@ -8,11 +8,14 @@ import '../../../core/theme/threshold_colors.dart';
 import '../../../data/models/level_data.dart';
 import '../../../data/repositories/level_repository.dart';
 import '../../../domain/services/alert_service.dart';
+import '../../../domain/services/level_insights.dart';
+import '../../providers/alert_providers.dart';
 import '../../providers/level_providers.dart';
 import '../../widgets/data_status_banner.dart';
 import '../../widgets/error_body.dart';
 import '../../widgets/regional_alert_card.dart';
 import 'amarcord_screen.dart';
+import 'home_summary_cards.dart';
 
 final _meterFormat = NumberFormat('0.00', 'it');
 final _timeFormat = DateFormat('HH:mm');
@@ -21,6 +24,13 @@ final _dayTimeFormat = DateFormat('dd/MM HH:mm');
 /// Schermata principale: livello del Livenza a Sacile.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  Future<void> _refresh(WidgetRef ref) async {
+    await Future.wait([
+      ref.read(levelProvider.notifier).refresh(),
+      ref.read(regionalAlertProvider.notifier).refresh(),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,7 +42,7 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Aggiorna',
-            onPressed: () => ref.read(levelProvider.notifier).refresh(),
+            onPressed: () => _refresh(ref),
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -40,9 +50,13 @@ class HomeScreen extends ConsumerWidget {
       body: Column(
         children: [
           _buildBanner(state),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: RegionalAlertCard(),
+          ),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: () => ref.read(levelProvider.notifier).refresh(),
+              onRefresh: () => _refresh(ref),
               child: switch (state) {
                 AsyncValue(:final value?) => _LevelBody(result: value),
                 AsyncValue(hasError: true) => const ErrorBody(),
@@ -83,12 +97,15 @@ class _LevelBody extends ConsumerWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
-        const RegionalAlertCard(),
         _CurrentLevelCard(data: data, alert: alert, trend: trend),
         const SizedBox(height: 12),
-        _ThresholdsCard(currentAlert: alert),
+        LevelInsightsCard(data: data),
         const SizedBox(height: 12),
         _ChartCard(data: data),
+        const SizedBox(height: 12),
+        const HomeWeatherSummary(),
+        const HomeFavoriteStations(),
+        _ThresholdsCard(currentAlert: alert),
         const SizedBox(height: 12),
         Card(
           child: ListTile(
@@ -102,9 +119,7 @@ class _LevelBody extends ConsumerWidget {
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const AmarcordScreen(),
-              ),
+              MaterialPageRoute<void>(builder: (_) => const AmarcordScreen()),
             ),
           ),
         ),
@@ -113,8 +128,8 @@ class _LevelBody extends ConsumerWidget {
           'Fonte: Protezione Civile FVG — rete di monitoraggio '
           '(stazione di Sacile, dati non validati)',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -144,10 +159,11 @@ class _CurrentLevelCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Text('Livello attuale', style: theme.textTheme.titleMedium),
+            Text('Ultimo livello misurato', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
               latest == null ? '—' : '${_meterFormat.format(latest.value)} m',
+              key: const ValueKey('sacile-latest-level'),
               style: theme.textTheme.displayMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: alert.color,
@@ -169,8 +185,11 @@ class _CurrentLevelCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 Icon(trend.icon, size: 20, color: theme.colorScheme.primary),
                 const SizedBox(width: 6),
@@ -184,8 +203,7 @@ class _CurrentLevelCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'misura delle '
-                    '${_timeFormat.format(latest.timestampLocal)}',
+                    'misura del ${_dayTimeFormat.format(latest.timestampLocal)}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -210,28 +228,31 @@ class _ThresholdsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Soglie di allerta', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            _ThresholdRow(
-              color: ThresholdColors.soglia1,
-              label: 'Allerta gialla',
-              value: AppConfig.sogliaGialla,
-              highlighted: currentAlert == AlertLevel.yellow,
-            ),
-            const SizedBox(height: 8),
-            _ThresholdRow(
-              color: ThresholdColors.soglia3,
-              label: 'Allerta rossa',
-              value: AppConfig.sogliaRossa,
-              highlighted: currentAlert == AlertLevel.red,
-            ),
-          ],
-        ),
+      child: ExpansionTile(
+        title: const Text('Soglie idrometriche indicative'),
+        subtitle: const Text('Come leggere il livello di Sacile'),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          _ThresholdRow(
+            color: ThresholdColors.soglia1,
+            label: 'Soglia gialla',
+            value: AppConfig.sogliaGialla,
+            highlighted: currentAlert == AlertLevel.yellow,
+          ),
+          const SizedBox(height: 8),
+          _ThresholdRow(
+            color: ThresholdColors.soglia3,
+            label: 'Soglia rossa',
+            value: AppConfig.sogliaRossa,
+            highlighted: currentAlert == AlertLevel.red,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Riferimenti indicativi dell’app, non allerte ufficiali. '
+            'I metri sono riferiti allo zero dell’idrometro di Sacile.',
+            style: theme.textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }
@@ -300,17 +321,9 @@ class _ChartCard extends StatelessWidget {
         FlSpot(m.timestampUtc.millisecondsSinceEpoch.toDouble(), m.value),
     ];
 
-    final values = [for (final m in history) m.value];
-    final dataMin = values.reduce((a, b) => a < b ? a : b);
-    final dataMax = values.reduce((a, b) => a > b ? a : b);
-
-    // Range Y: segue i dati; se il livello si avvicina alle soglie,
-    // estende il grafico per renderle visibili.
-    final minY = (dataMin - 0.3).clamp(0.0, double.infinity);
-    var maxY = dataMax + 0.3;
-    if (dataMax >= AppConfig.sogliaGialla - 1.0) {
-      maxY = AppConfig.sogliaRossa + 0.4;
-    }
+    final range = const LevelInsights().chartRange(history);
+    final minY = range.min;
+    final maxY = range.max;
 
     final showThresholds = maxY >= AppConfig.sogliaGialla;
 
@@ -322,10 +335,7 @@ class _ChartCard extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 8),
-              child: Text(
-                'Ultime 48 ore',
-                style: theme.textTheme.titleMedium,
-              ),
+              child: Text('Ultime 48 ore', style: theme.textTheme.titleMedium),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -343,30 +353,32 @@ class _ChartCard extends StatelessWidget {
                       dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: theme.colorScheme.primary
-                            .withValues(alpha: 0.12),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.12,
+                        ),
                       ),
                     ),
                   ],
                   extraLinesData: ExtraLinesData(
                     horizontalLines: [
-                      if (showThresholds) ...[
+                      if (showThresholds && AppConfig.sogliaGialla >= minY)
                         _thresholdLine(
                           AppConfig.sogliaGialla,
                           ThresholdColors.soglia1,
                         ),
+                      if (showThresholds && AppConfig.sogliaRossa >= minY)
                         _thresholdLine(
                           AppConfig.sogliaRossa,
                           ThresholdColors.soglia3,
                         ),
-                      ],
                     ],
                   ),
                   gridData: FlGridData(
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (_) => FlLine(
-                      color: theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.4),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.4,
+                      ),
                       strokeWidth: 1,
                     ),
                   ),
@@ -387,9 +399,13 @@ class _ChartCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 30,
-                        interval: const Duration(hours: 12)
-                            .inMilliseconds
-                            .toDouble(),
+                        // Le etichette ai bordi si sovrappongono alla
+                        // prima/ultima dell'intervallo regolare.
+                        minIncluded: false,
+                        maxIncluded: false,
+                        interval: const Duration(
+                          hours: 12,
+                        ).inMilliseconds.toDouble(),
                         getTitlesWidget: (value, meta) {
                           final t = DateTime.fromMillisecondsSinceEpoch(
                             value.toInt(),
@@ -440,4 +456,3 @@ class _ChartCard extends StatelessWidget {
     );
   }
 }
-

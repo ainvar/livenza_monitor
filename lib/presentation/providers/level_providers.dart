@@ -36,22 +36,46 @@ final alertServiceProvider = Provider<AlertService>(
 
 /// Stato dei livelli, con refresh automatico ogni [AppConfig.refreshInterval].
 class LevelNotifier extends AsyncNotifier<LevelResult> {
+  bool _disposed = false;
+  Future<void>? _refreshing;
+
   @override
-  Future<LevelResult> build() {
+  Future<LevelResult> build() async {
+    _disposed = false;
+    final repository = ref.watch(levelRepositoryProvider);
     final timer = Timer.periodic(
       AppConfig.refreshInterval,
-      (_) => ref.invalidateSelf(),
+      (_) => unawaited(refresh()),
     );
-    ref.onDispose(timer.cancel);
-    return ref.watch(levelRepositoryProvider).load();
+    ref.onDispose(() {
+      _disposed = true;
+      timer.cancel();
+    });
+    final cached = await repository.readCached();
+    if (cached != null) {
+      // Il primo frame mostra subito la cache; la rete la aggiorna dopo.
+      Timer.run(() {
+        if (!_disposed) unawaited(refresh());
+      });
+      return cached;
+    }
+    return repository.load();
   }
 
   /// Refresh manuale (pull-to-refresh o pulsante) che mantiene
   /// visibili i dati correnti durante il caricamento.
-  Future<void> refresh() async {
-    state = await AsyncValue.guard(
+  Future<void> refresh() =>
+      _refreshing ??= _refresh().whenComplete(() => _refreshing = null);
+
+  Future<void> _refresh() async {
+    final next = await AsyncValue.guard(
       () => ref.read(levelRepositoryProvider).load(),
     );
+    if (_disposed) return;
+    final previous = state.valueOrNull;
+    state = next.hasError && previous != null
+        ? AsyncData(LevelResult(data: previous.data, fromCache: true))
+        : next;
   }
 }
 

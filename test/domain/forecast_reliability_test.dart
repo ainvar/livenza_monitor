@@ -27,8 +27,7 @@ void main() {
   group('compute', () {
     test('scenari tutti concordi -> 100%', () {
       final data = build(members: 40, rainyPerDay: [40, 0, 40]);
-      final result =
-          service.compute(data, now: DateTime(2026, 7, 10, 0, 30));
+      final result = service.compute(data, now: DateTime(2026, 7, 10, 0, 30));
 
       expect(result.daily[DateTime(2026, 7, 10)], 100); // tutti pioggia
       expect(result.daily[DateTime(2026, 7, 11)], 100); // tutti asciutto
@@ -37,8 +36,7 @@ void main() {
 
     test('scenari divisi a metà -> 50%', () {
       final data = build(members: 40, rainyPerDay: [20, 30, 0]);
-      final result =
-          service.compute(data, now: DateTime(2026, 7, 10, 0, 30));
+      final result = service.compute(data, now: DateTime(2026, 7, 10, 0, 30));
 
       expect(result.daily[DateTime(2026, 7, 10)], 50);
       expect(result.daily[DateTime(2026, 7, 11)], 75);
@@ -49,8 +47,7 @@ void main() {
       // dopo l'ora di pioggia del giorno 1, quindi conta solo i
       // giorni 2 (asciutto per tutti) e 3 (asciutto per tutti).
       final data = build(members: 40, rainyPerDay: [30, 0, 0]);
-      final result =
-          service.compute(data, now: DateTime(2026, 7, 10, 0, 30));
+      final result = service.compute(data, now: DateTime(2026, 7, 10, 0, 30));
 
       expect(result.next48h, isNotNull);
       expect(result.next48h, 100);
@@ -58,9 +55,7 @@ void main() {
 
     test('giorni troncati esclusi, finestra corta -> null', () {
       // Solo 10 ore disponibili: né giorni completi né finestra 48h.
-      final times = [
-        for (var h = 0; h < 10; h++) DateTime(2026, 7, 10, h),
-      ];
+      final times = [for (var h = 0; h < 10; h++) DateTime(2026, 7, 10, h)];
       final data = EnsembleHourly(
         times: times,
         members: [
@@ -88,8 +83,42 @@ void main() {
       expect(data.times.length, 2);
       expect(data.members.length, 2);
       expect(data.members[0], [0.0, 1.5]);
-      // null -> 0.
-      expect(data.members[1], [0.2, 0.0]);
+      // Una misura mancante non diventa uno scenario asciutto.
+      expect(data.members[1], [0.2, null]);
+    });
+
+    test('scarta orari invalidi senza spostare i valori successivi', () {
+      final data = parseEnsembleHourly({
+        'hourly': {
+          'time': ['2026-07-10T02:00', 'non valido', '2026-07-10T01:00'],
+          'precipitation_member01': [2, 99, 1],
+          'precipitation_member02': [-1, 99, double.infinity],
+        },
+      });
+      expect(data.times, [DateTime(2026, 7, 10, 1), DateTime(2026, 7, 10, 2)]);
+      expect(data.members[0], [1, 2]);
+      expect(data.members[1], [null, null]);
+    });
+
+    test('troppe lacune non producono una concordanza artificiale', () {
+      final original = build(members: 5, rainyPerDay: [0, 0, 0]);
+      final members = [
+        for (final m in original.members) [...m],
+      ];
+      members[0][10] = null;
+      members[1][10] = null;
+      final result = service.compute(
+        EnsembleHourly(times: original.times, members: members),
+        now: DateTime(2026, 7, 10, 0, 30),
+      );
+      expect(result.daily[DateTime(2026, 7, 10)], isNull);
+      expect(result.next48h, isNull);
+      expect(result.daily[DateTime(2026, 7, 11)], 100);
+    });
+
+    test('finestra 48 ore con inizio distante resta indisponibile', () {
+      final data = build(members: 4, rainyPerDay: [0, 0, 0]);
+      expect(service.compute(data, now: DateTime(2026, 7, 8)).next48h, isNull);
     });
   });
 }

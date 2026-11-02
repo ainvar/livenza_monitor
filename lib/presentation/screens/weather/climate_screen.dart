@@ -173,6 +173,8 @@ class _AnomalyCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 40,
+                        minIncluded: false,
+                        maxIncluded: false,
                         getTitlesWidget: (value, meta) => Text(
                           _signed(value),
                           style: theme.textTheme.labelSmall,
@@ -296,6 +298,8 @@ class _MeanTempCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 40,
+                        minIncluded: false,
+                        maxIncluded: false,
                         getTitlesWidget: (value, meta) => Text(
                           _degFormat.format(value),
                           style: theme.textTheme.labelSmall,
@@ -398,6 +402,7 @@ class _HotDaysCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 34,
+                        maxIncluded: false,
                         getTitlesWidget: (value, meta) => Text(
                           '${value.toInt()}',
                           style: theme.textTheme.labelSmall,

@@ -74,12 +74,12 @@ void main() {
     const filter = NewsFilter();
 
     NewsItem item(String title, [String summary = '']) => NewsItem(
-          title: title,
-          link: 'https://esempio.it',
-          source: 'X',
-          publishedUtc: DateTime.utc(2026),
-          summary: summary,
-        );
+      title: title,
+      link: 'https://esempio.it',
+      source: 'X',
+      publishedUtc: DateTime.utc(2026),
+      summary: summary,
+    );
 
     test('tiene le notizie con località o fiumi del bacino', () {
       expect(filter.isRelevant(item('Piena del Livenza a SACILE')), isTrue);
@@ -92,7 +92,83 @@ void main() {
 
     test('scarta le notizie non pertinenti', () {
       expect(filter.isRelevant(item('Nuova rotatoria a Codroipo')), isFalse);
-      expect(filter.isRelevant(item('Il festival del cinema a Udine')), isFalse);
+      expect(
+        filter.isRelevant(item('Il festival del cinema a Udine')),
+        isFalse,
+      );
+    });
+
+    test('le categorie includono titoli, sommari e temi sovrapposti', () {
+      final news = item(
+        'Sacile: il Comune chiude il ponte',
+        'La pioggia fa salire il Livenza',
+      );
+      expect(filter.matchesTopic(news, NewsTopic.riverAndWeather), isTrue);
+      expect(filter.matchesTopic(news, NewsTopic.townAndRoads), isTrue);
+      expect(filter.matchesTopic(news, NewsTopic.all), isTrue);
+      expect(
+        filter.matchesTopic(item('Mostra a Sacile'), NewsTopic.riverAndWeather),
+        isFalse,
+      );
+      expect(
+        filter.matchesTopic(
+          item('Livenza in crescita'),
+          NewsTopic.riverAndWeather,
+        ),
+        isTrue,
+      );
+    });
+
+    NewsItem article({
+      required String link,
+      String title = 'Maltempo a Sacile',
+      String source = 'Testata A',
+      int day = 3,
+    }) => NewsItem(
+      title: title,
+      link: link,
+      source: source,
+      publishedUtc: DateTime.utc(2026, 7, day),
+    );
+
+    test('deduplica link con tracciamento e conserva la versione recente', () {
+      final older = article(
+        link: 'https://esempio.it/piena?utm_source=rss&id=42#lettura',
+        day: 2,
+      );
+      final newer = article(
+        link: 'https://esempio.it/piena?id=42&fbclid=abc',
+        title: 'Titolo aggiornato a Sacile',
+      );
+      expect(filter.deduplicate([older, newer]), [newer]);
+    });
+
+    test('preserva notizie indipendenti con titoli uguali', () {
+      final first = article(link: 'https://testataa.it/1');
+      final second = article(
+        link: 'https://testatab.it/2',
+        source: 'Testata B',
+      );
+      expect(filter.deduplicate([first, second]), containsAll([first, second]));
+    });
+
+    test('accorpa il titolo nella stessa testata solo entro 48 ore', () {
+      final newer = article(link: 'https://esempio.it/3', day: 5);
+      final recentCopy = article(link: 'https://esempio.it/2', day: 4);
+      final previousBulletin = article(link: 'https://esempio.it/1', day: 1);
+      expect(filter.deduplicate([previousBulletin, recentCopy, newer]), [
+        newer,
+        previousBulletin,
+      ]);
+    });
+
+    test('preserva parametri URL che identificano articoli diversi', () {
+      final first = article(link: 'https://esempio.it/notizia?id=1');
+      final second = article(
+        link: 'https://esempio.it/notizia?id=2',
+        title: 'Viabilità a Sacile',
+      );
+      expect(filter.deduplicate([first, second]), hasLength(2));
     });
   });
 }

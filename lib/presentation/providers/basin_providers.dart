@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,10 +20,15 @@ final basinDatasourceProvider = Provider<BasinDatasource>((ref) {
 /// È una factory e non un'istanza condivisa: TileLayer si appropria
 /// del TileProvider e lo dispone (chiudendo il suo client HTTP),
 /// quindi ogni TileLayer deve averne uno proprio.
-final mapTileProviderFactoryProvider = Provider<TileProvider Function()>((
-  ref,
-) {
-  return NetworkTileProvider.new;
+final mapTileProviderFactoryProvider = Provider<TileProvider Function()>((ref) {
+  // Sul web la cache HTTP è gestita dal browser.
+  if (kIsWeb) return NetworkTileProvider.new;
+  return () => NetworkTileProvider(
+    headers: {'User-Agent': AppConfig.mapUserAgent},
+    cachingProvider: BuiltInMapCachingProvider.getOrCreateInstance(
+      maxCacheSize: 50 * 1024 * 1024,
+    ),
+  );
 });
 
 final basinCacheProvider = Provider<BasinCache>((ref) => BasinCache());

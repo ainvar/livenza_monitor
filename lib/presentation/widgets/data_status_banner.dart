@@ -24,17 +24,21 @@ StatusBanner dataStatusBanner<T>({
   final value = state.valueOrNull;
   if (value != null) {
     final fetched = fetchedAtUtc(value);
-    final fetchedLabel =
-        fetched == null ? '' : _timeFormat.format(fetched.toLocal());
+    final fetchedLabel = fetched == null
+        ? ''
+        : _timeFormat.format(fetched.toLocal());
     if (fromCache(value)) {
       return StatusBanner(
-        status: BannerStatus.offline,
-        message: 'Rete assente: dati salvati alle $fetchedLabel',
+        status: BannerStatus.stale,
+        message: fetched == null
+            ? 'Ultimi dati salvati sul dispositivo'
+            : 'Dati salvati · ${_dayTimeFormat.format(fetched.toLocal())}',
       );
     }
     final newest = newestMeasureUtc(value);
-    final measureAge =
-        newest == null ? null : DateTime.now().toUtc().difference(newest);
+    final measureAge = newest == null
+        ? null
+        : DateTime.now().toUtc().difference(newest);
     if (measureAge == null || measureAge > _staleMeasureAge) {
       return StatusBanner(
         status: BannerStatus.stale,

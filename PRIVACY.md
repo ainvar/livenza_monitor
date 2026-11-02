@@ -1,6 +1,6 @@
 # Informativa sulla privacy — Livenza Monitor
 
-*Ultimo aggiornamento: 12 luglio 2026*
+*Ultimo aggiornamento: 14 ottobre 2026*
 
 **Livenza Monitor** è un'app civica gratuita e senza pubblicità per il
 monitoraggio del fiume Livenza a Sacile (PN).
@@ -25,7 +25,7 @@ fonti dati pubbliche necessarie al suo funzionamento:
 - Protezione Civile della Regione FVG (livelli idrometrici);
 - ARPA FVG — OSMER (bollettino di previsione);
 - Open-Meteo (previsioni meteo e serie storica);
-- CARTO / OpenStreetMap (tile della mappa);
+- OpenStreetMap (tile della mappa);
 - feed RSS di testate giornalistiche locali (titoli delle notizie).
 
 Queste richieste non contengono dati personali né identificativi
@@ -36,7 +36,9 @@ rispettivi fornitori secondo le loro informative.
 ## Dati salvati sul dispositivo
 
 L'app salva localmente (solo sul dispositivo dell'utente) una copia
-degli ultimi dati scaricati, per poterli mostrare anche offline.
+degli ultimi dati scaricati, per poterli mostrare anche offline,
+gli identificativi delle stazioni scelte come preferite e una cache delle
+tile già visualizzate per ridurre le richieste al servizio mappa.
 Questi dati non lasciano mai il dispositivo e vengono eliminati con
 la disinstallazione dell'app.
 

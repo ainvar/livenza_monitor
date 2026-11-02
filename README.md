@@ -21,20 +21,34 @@ cittadinanza in caso di piene.
 
 - **Livenza** — livello idrometrico attuale a Sacile con stato di allerta,
   tendenza (salita/discesa/stabile) e grafico delle ultime 48 ore
+- **Sintesi** — variazioni misurate nell'ultima ora e nelle ultime 6 ore,
+  picco recente e distanza dalla soglia idrometrica indicativa
 - **Bacino** — mappa e livelli delle stazioni idrometriche del bacino del
   Livenza (Gorgazzo, Fiaschetti, Meschio, Noncello, Meduna…)
+- **Preferiti e dettaglio stazione** — preferenze salvate sul dispositivo,
+  grafici a 6/24/48 ore su richiesta e freschezza di ogni misura
 - **Meteo** — condizioni attuali e previsioni a 7 giorni per Sacile, con
-  pioggia caduta nelle ultime 24 ore e prevista nelle prossime 48
+  pioggia stimata per le ultime 24 ore e prevista nelle prossime 48
+- **Meteo del bacino** — cinque località selezionabili, pioggia passata
+  esplicitamente stimata dal modello e accesso al radar OSMER
 - **Storico** — 86 anni di dati (dal 1940): pioggia annua, confronto
   dell'anno in corso con il clima, giorni record, temperature e
   riscaldamento climatico locale
 - **Notizie** — notizie delle testate locali rilevanti per Sacile e il
   bacino del Livenza
+- **Filtri notizie** — fiume e meteo, Comune e viabilità; duplicati rimossi
 - **Le grandi piene** — la memoria storica del fiume: gli eventi che hanno
   segnato il territorio, raccontati attraverso i dati
+- **Memoria interattiva** — eventi espandibili, ricorrenze e condivisione
+  del racconto con il contesto dei dati storici
 
 L'app funziona anche offline mostrando gli ultimi dati scaricati,
 segnalandone chiaramente l'età.
+
+La versione 1.1 usa le API pubbliche direttamente e salva cache e preferiti
+sul dispositivo. Backend e notifiche rimangono nella roadmap.
+Le percentuali ensemble esprimono la concordanza degli scenari sulla
+pioggia, non l'accuratezza verificata delle previsioni.
 
 ### Soglie di allerta
 
@@ -53,7 +67,7 @@ Protezione Civile.
 | Previsioni, scenari ensemble | [Open-Meteo](https://open-meteo.com/) | CC BY 4.0 |
 | Serie storica 1940–oggi | Rianalisi ERA5 (Copernicus/ECMWF) via [Open-Meteo](https://open-meteo.com/) | CC BY 4.0 |
 | Mappa (dati) | © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | ODbL |
-| Mappa (tile) | © [CARTO](https://carto.com/attributions) | Uso non commerciale con attribuzione |
+| Mappa (tile) | [OpenStreetMap Standard](https://operations.osmfoundation.org/policies/tiles/) | Nessuna chiave API; attribuzione visibile, User-Agent identificabile e cache HTTP locale |
 | Notizie | Feed RSS delle rispettive testate (Il Friuli, Nordest24, Il Popolo) | © delle testate |
 
 Note sui dati:
@@ -64,6 +78,9 @@ Note sui dati:
   per il punto di Sacile, non misure di una stazione meteorologica reale.
 - Delle notizie vengono mostrati solo titolo, data e fonte; gli articoli si
   aprono sul sito della testata.
+- La mappa scarica soltanto le tile della vista interattiva, con cache
+  persistente (budget di 50 MB) che rispetta le intestazioni HTTP del servizio.
+  Non sono previsti download preventivi di aree per l'uso offline.
 
 ## Privacy
 
@@ -94,6 +111,16 @@ flutter test tool/generate_icons.dart  # rigenera le sorgenti dell'icona
 dart run flutter_launcher_icons        # applica le icone launcher
 flutter build apk --release            # APK di release
 ```
+
+Se sul telefono è presente la versione del Play Store, la firma gestita
+da Google può impedire di sovrascriverla con un APK locale. Per una copia
+affiancata chiamata **Livenza Monitor Anteprima**, in PowerShell:
+
+```powershell
+flutter build apk --release --target-platform android-arm64 -P livenzaPreview=true
+```
+
+L'anteprima usa un identificativo separato e una propria cache e preferenze.
 
 ## Roadmap
 

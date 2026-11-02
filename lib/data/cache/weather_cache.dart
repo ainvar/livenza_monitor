@@ -6,7 +6,10 @@ import '../models/weather_data.dart';
 
 /// Cache locale dell'ultimo meteo scaricato.
 class WeatherCache {
-  static const _key = 'weather_data_v1';
+  WeatherCache({this.locationId = 543});
+
+  final int locationId;
+  String get _key => 'weather_data_v2_$locationId';
 
   Future<void> save(WeatherData data) async {
     final prefs = await SharedPreferences.getInstance();
@@ -20,7 +23,8 @@ class WeatherCache {
     try {
       final json = jsonDecode(raw);
       if (json is! Map<String, dynamic>) return null;
-      return WeatherData.fromCacheJson(json);
+      final data = WeatherData.fromCacheJson(json);
+      return data?.locationId == locationId ? data : null;
     } on FormatException {
       return null;
     }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 import '../../core/theme/threshold_colors.dart';
 import '../../data/models/hydro_measure.dart';
+import 'level_insights.dart';
 
 /// Stato di allerta derivato dal livello idrometrico a Sacile.
 enum AlertLevel { unknown, normal, yellow, red }
@@ -30,23 +31,11 @@ class AlertService {
   /// Calcola la tendenza confrontando l'ultima misura con quella
   /// più vicina a un'ora prima.
   LevelTrend trend(List<HydroMeasure> history) {
-    if (history.length < 2) return LevelTrend.unknown;
-    final latest = history.last;
-    final target = latest.timestampUtc.subtract(const Duration(hours: 1));
-
-    HydroMeasure reference = history.first;
-    Duration bestDistance = reference.timestampUtc.difference(target).abs();
-    for (final m in history) {
-      final distance = m.timestampUtc.difference(target).abs();
-      if (distance < bestDistance) {
-        reference = m;
-        bestDistance = distance;
-      }
-    }
-    // Serve un riferimento ragionevolmente vicino a un'ora fa.
-    if (bestDistance > const Duration(minutes: 45)) return LevelTrend.unknown;
-
-    final delta = latest.value - reference.value;
+    final delta = const LevelInsights().change(
+      history,
+      const Duration(hours: 1),
+    );
+    if (delta == null) return LevelTrend.unknown;
     if (delta >= _trendEpsilon) return LevelTrend.rising;
     if (delta <= -_trendEpsilon) return LevelTrend.falling;
     return LevelTrend.steady;
@@ -56,32 +45,32 @@ class AlertService {
 /// Presentazione degli stati di allerta (colore e testo).
 extension AlertLevelUi on AlertLevel {
   Color get color => switch (this) {
-        AlertLevel.normal => ThresholdColors.normal,
-        AlertLevel.yellow => ThresholdColors.soglia1,
-        AlertLevel.red => ThresholdColors.soglia3,
-        AlertLevel.unknown => ThresholdColors.unknown,
-      };
+    AlertLevel.normal => ThresholdColors.normal,
+    AlertLevel.yellow => ThresholdColors.soglia1,
+    AlertLevel.red => ThresholdColors.soglia3,
+    AlertLevel.unknown => ThresholdColors.unknown,
+  };
 
   String get label => switch (this) {
-        AlertLevel.normal => 'Livello normale',
-        AlertLevel.yellow => 'Allerta gialla',
-        AlertLevel.red => 'Allerta rossa',
-        AlertLevel.unknown => 'Livello non disponibile',
-      };
+    AlertLevel.normal => 'Sotto le soglie indicative',
+    AlertLevel.yellow => 'Soglia indicativa gialla superata',
+    AlertLevel.red => 'Soglia indicativa rossa superata',
+    AlertLevel.unknown => 'Livello non disponibile',
+  };
 }
 
 extension LevelTrendUi on LevelTrend {
   IconData get icon => switch (this) {
-        LevelTrend.rising => Icons.trending_up,
-        LevelTrend.falling => Icons.trending_down,
-        LevelTrend.steady => Icons.trending_flat,
-        LevelTrend.unknown => Icons.help_outline,
-      };
+    LevelTrend.rising => Icons.trending_up,
+    LevelTrend.falling => Icons.trending_down,
+    LevelTrend.steady => Icons.trending_flat,
+    LevelTrend.unknown => Icons.help_outline,
+  };
 
   String get label => switch (this) {
-        LevelTrend.rising => 'In salita',
-        LevelTrend.falling => 'In discesa',
-        LevelTrend.steady => 'Stabile',
-        LevelTrend.unknown => 'Trend n/d',
-      };
+    LevelTrend.rising => 'In salita',
+    LevelTrend.falling => 'In discesa',
+    LevelTrend.steady => 'Stabile',
+    LevelTrend.unknown => 'Trend n/d',
+  };
 }

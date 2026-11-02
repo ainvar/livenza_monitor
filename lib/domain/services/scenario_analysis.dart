@@ -12,6 +12,7 @@ class ScenarioResult {
     required this.p90,
     required this.memberCount,
     required this.exceedanceProbability,
+    this.totalMemberCount = 0,
   });
 
   /// Orari dei passi della cumulata (futuri, ordinati).
@@ -25,6 +26,10 @@ class ScenarioResult {
   final List<double> p90;
 
   final int memberCount;
+  final int totalMemberCount;
+
+  /// Ore effettivamente rappresentate, non un orizzonte fisso di 7 giorni.
+  int get horizonHours => times.length;
 
   /// Probabilità (%) che la cumulata totale superi la soglia (mm).
   final Map<int, int> exceedanceProbability;
@@ -49,12 +54,22 @@ class ScenarioAnalysis {
         if (data.times[i].isAfter(now)) i,
     ];
     if (indices.length < 24 || data.members.isEmpty) return null;
+    if (data.times[indices.first].difference(now) > const Duration(hours: 1)) {
+      return null;
+    }
+    for (var i = 1; i < indices.length; i++) {
+      if (data.times[indices[i]].difference(data.times[indices[i - 1]]) !=
+          const Duration(hours: 1)) {
+        return null;
+      }
+    }
+    final members = data.completeMembers(indices);
+    if (members.isEmpty) return null;
 
     // Cumulate per membro a ogni passo.
     final steps = indices.length;
     final cumulative = <List<double>>[
-      for (final member in data.members)
-        _runningSum([for (final i in indices) member[i]]),
+      for (final member in members) _runningSum(member),
     ];
 
     // Percentili passo per passo.
@@ -76,10 +91,14 @@ class ScenarioAnalysis {
     final totals = [for (final c in cumulative) c.last];
     final exceedance = <int, int>{
       for (final t in thresholds)
-        t: ([for (final v in totals) if (v >= t) v].length *
-                100 /
-                totals.length)
-            .round(),
+        t:
+            ([
+                      for (final v in totals)
+                        if (v >= t) v,
+                    ].length *
+                    100 /
+                    totals.length)
+                .round(),
     };
 
     return ScenarioResult(
@@ -89,7 +108,8 @@ class ScenarioAnalysis {
       p50: p50,
       p75: p75,
       p90: p90,
-      memberCount: data.members.length,
+      memberCount: members.length,
+      totalMemberCount: data.members.length,
       exceedanceProbability: exceedance,
     );
   }

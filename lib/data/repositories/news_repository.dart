@@ -45,7 +45,11 @@ class NewsRepository {
       final cached = await cache.read();
       if (cached != null) {
         final (items, fetchedAt) = cached;
-        return NewsResult(items: items, fetchedAtUtc: fetchedAt, fromCache: true);
+        return NewsResult(
+          items: filter.relevant(items),
+          fetchedAtUtc: fetchedAt,
+          fromCache: true,
+        );
       }
       rethrow;
     }

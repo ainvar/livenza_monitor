@@ -204,6 +204,7 @@ class _CurrentVsClimateCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 44,
+                        maxIncluded: false,
                         getTitlesWidget: (value, meta) => Text(
                           _mmFormat.format(value),
                           style: theme.textTheme.labelSmall,
@@ -360,6 +361,7 @@ class _AnnualCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 44,
+                        maxIncluded: false,
                         getTitlesWidget: (value, meta) => Text(
                           _mmFormat.format(value),
                           style: theme.textTheme.labelSmall,

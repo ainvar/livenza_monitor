@@ -1,53 +1,60 @@
-import '../../domain/services/forecast_reliability.dart';
 import '../cache/weather_cache.dart';
-import '../datasources/ensemble_datasource.dart';
 import '../datasources/weather_datasource.dart';
 import '../models/weather_data.dart';
 
 /// Esito del caricamento meteo: dati + provenienza.
 class WeatherResult {
-  const WeatherResult({required this.data, required this.fromCache});
+  const WeatherResult({
+    required this.data,
+    required this.fromCache,
+    this.isOfflineFallback = false,
+  });
 
   final WeatherData data;
   final bool fromCache;
+  final bool isOfflineFallback;
 }
 
-/// Rete prima, cache come ripiego (come gli altri repository).
-/// L'affidabilità (ensemble) è un arricchimento: se il suo download
-/// fallisce, la previsione viene mostrata comunque.
+/// Forecast base indipendente dall'ensemble: può essere mostrato subito.
 class WeatherRepository {
-  WeatherRepository({
-    required this.datasource,
-    required this.ensembleDatasource,
-    required this.reliability,
-    required this.cache,
-  });
+  WeatherRepository({required this.datasource, required this.cache});
 
   final WeatherDatasource datasource;
-  final EnsembleDatasource ensembleDatasource;
-  final ForecastReliability reliability;
   final WeatherCache cache;
+  static const maxAge = Duration(minutes: 15);
+  Future<WeatherResult>? _pending;
 
-  Future<WeatherResult> load() async {
+  Future<WeatherResult> load({bool force = false}) =>
+      _pending ??= _load(force: force).whenComplete(() => _pending = null);
+
+  Future<WeatherResult> _load({required bool force}) async {
+    WeatherData? cached;
     try {
-      var data = await datasource.fetchForecast();
-      try {
-        final ensemble = await ensembleDatasource.fetchHourlyPrecipitation();
-        final result = reliability.compute(ensemble, now: data.current.time);
-        data = data.withReliability(
-          daily: result.daily,
-          next48h: result.next48h,
-        );
-      } catch (_) {
-        // Ensemble non disponibile: si mostra la previsione senza
-        // percentuali di affidabilità.
+      cached = await cache.read();
+    } catch (_) {
+      // Una cache non leggibile non impedisce il download.
+    }
+    if (!force && cached != null) {
+      final age = DateTime.now().toUtc().difference(cached.fetchedAtUtc);
+      if (!age.isNegative && age < maxAge) {
+        return WeatherResult(data: cached, fromCache: true);
       }
-      await cache.save(data);
+    }
+    try {
+      final data = await datasource.fetchForecast();
+      try {
+        await cache.save(data);
+      } catch (_) {
+        // Restituisce comunque la previsione appena ricevuta.
+      }
       return WeatherResult(data: data, fromCache: false);
     } catch (_) {
-      final cached = await cache.read();
       if (cached != null) {
-        return WeatherResult(data: cached, fromCache: true);
+        return WeatherResult(
+          data: cached,
+          fromCache: true,
+          isOfflineFallback: true,
+        );
       }
       rethrow;
     }

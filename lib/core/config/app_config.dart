@@ -51,13 +51,14 @@ class AppConfig {
   /// Zona del bollettino OSMER in cui ricade Sacile.
   static const String osmerZone = 'Z2'; // Alta Pianura
 
-  /// Tile raster della mappa: CARTO Voyager (gratuito per uso non
-  /// commerciale, attribuzione OSM + CARTO richiesta). Non si usa
-  /// tile.openstreetmap.org: la Tile Usage Policy OSMF ne vieta
-  /// l'uso nelle app distribuite.
+  /// Mappa OpenStreetMap Standard, senza account o chiave API.
+  /// Solo visualizzazione interattiva, con attribuzione sempre visibile,
+  /// User-Agent identificabile e cache HTTP persistente di flutter_map.
+  /// Policy: https://operations.osmfoundation.org/policies/tiles/
   static const String mapTileUrl =
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
-  static const List<String> mapTileSubdomains = ['a', 'b', 'c', 'd'];
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  static const String mapUserAgent =
+      'LivenzaMonitor/1.1.1 (it.livenzamonitor.app)';
 
   /// API previsioni meteo Open-Meteo.
   static const String openMeteoBaseUrl =

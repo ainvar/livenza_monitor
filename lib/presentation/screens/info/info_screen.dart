@@ -59,12 +59,14 @@ class InfoScreen extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           const _SourceLink(
-            label: 'Livelli idrometrici — Protezione Civile FVG, '
+            label:
+                'Livelli idrometrici — Protezione Civile FVG, '
                 'rete di monitoraggio',
             url: 'https://monitor.protezionecivile.fvg.it',
           ),
           const _SourceLink(
-            label: 'Allerte regionali — Centro Funzionale Decentrato, '
+            label:
+                'Allerte regionali — Centro Funzionale Decentrato, '
                 'Protezione Civile FVG',
             url: 'https://cfd.protezionecivile.fvg.it',
           ),
@@ -73,12 +75,14 @@ class InfoScreen extends StatelessWidget {
             url: 'https://www.protezionecivile.fvg.it',
           ),
           const _SourceLink(
-            label: 'Bollettino di previsione — ARPA FVG - OSMER e GRN '
+            label:
+                'Bollettino di previsione — ARPA FVG - OSMER e GRN '
                 '(CC BY-SA 3.0 IT)',
             url: 'https://www.meteo.fvg.it',
           ),
           const _SourceLink(
-            label: 'Previsioni, scenari e serie storica — Open-Meteo / '
+            label:
+                'Previsioni, scenari e serie storica — Open-Meteo / '
                 'ERA5 Copernicus (CC BY 4.0)',
             url: 'https://open-meteo.com',
           ),
@@ -87,8 +91,8 @@ class InfoScreen extends StatelessWidget {
             url: 'https://www.openstreetmap.org/copyright',
           ),
           const _SourceLink(
-            label: 'Tile della mappa — © CARTO',
-            url: 'https://carto.com/attributions',
+            label: 'Servizio mappa — OpenStreetMap (senza chiave API)',
+            url: 'https://operations.osmfoundation.org/policies/tiles/',
           ),
           const SizedBox(height: 6),
           Text(
@@ -147,13 +151,15 @@ class _VersionSectionState extends State<_VersionSection> {
   @override
   void initState() {
     super.initState();
-    PackageInfo.fromPlatform().then((info) {
-      if (mounted) {
-        setState(() => _version = info.version);
-      }
-    }).catchError((Object _) {
-      // Plugin non disponibile (es. nei test): resta il fallback.
-    });
+    PackageInfo.fromPlatform()
+        .then((info) {
+          if (mounted) {
+            setState(() => _version = info.version);
+          }
+        })
+        .catchError((Object _) {
+          // Plugin non disponibile (es. nei test): resta il fallback.
+        });
   }
 
   @override
@@ -173,10 +179,8 @@ class _SourceLink extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return InkWell(
-      onTap: () => launchUrl(
-        Uri.parse(url),
-        mode: LaunchMode.externalApplication,
-      ),
+      onTap: () =>
+          launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
@@ -228,10 +232,7 @@ class _InfoSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            body,
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
-          ),
+          Text(body, style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
         ],
       ),
     );
