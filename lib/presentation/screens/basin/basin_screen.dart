@@ -195,17 +195,21 @@ class _BasinMap extends ConsumerWidget {
         Align(
           alignment: Alignment.bottomRight,
           child: Material(
-            color: Colors.white.withValues(alpha: 0.92),
+            color: theme.colorScheme.surface.withValues(alpha: 0.92),
+            borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
             child: InkWell(
               onTap: () => launchUrl(
                 Uri.parse('https://www.openstreetmap.org/copyright'),
                 mode: LaunchMode.externalApplication,
               ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Text(
                   '© OpenStreetMap contributors',
-                  style: TextStyle(fontSize: 11, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ),
             ),

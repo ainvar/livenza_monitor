@@ -11,6 +11,19 @@ import '../../widgets/data_status_banner.dart';
 import '../../widgets/error_body.dart';
 
 final _dayTimeFormat = DateFormat('dd/MM HH:mm');
+final _weekdayTimeFormat = DateFormat('EEE HH:mm', 'it');
+
+/// "12 min fa", "3 h fa", "ieri 18:30", poi la data.
+String relativeTime(DateTime published, {DateTime? now}) {
+  final reference = now ?? DateTime.now();
+  final diff = reference.difference(published);
+  if (diff.inMinutes < 1) return 'adesso';
+  if (diff.inMinutes < 60) return '${diff.inMinutes} min fa';
+  if (diff.inHours < 24) return '${diff.inHours} h fa';
+  if (diff.inHours < 48) return 'ieri ${DateFormat('HH:mm').format(published)}';
+  if (diff.inDays < 7) return _weekdayTimeFormat.format(published);
+  return _dayTimeFormat.format(published);
+}
 
 /// Notizie locali rilevanti per Sacile e il bacino del Livenza,
 /// aggregate dai feed RSS delle testate del territorio.
@@ -194,11 +207,13 @@ class _NewsTile extends StatelessWidget {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            '${item.source} · '
-            '${_dayTimeFormat.format(item.publishedLocal)}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.primary,
+          child: Tooltip(
+            message: _dayTimeFormat.format(item.publishedLocal),
+            child: Text(
+              '${item.source} · ${relativeTime(item.publishedLocal)}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
             ),
           ),
         ),

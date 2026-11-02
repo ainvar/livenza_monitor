@@ -155,63 +155,84 @@ class _CurrentLevelCard extends StatelessWidget {
     final latest = data.latest;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Text('Ultimo livello misurato', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              latest == null ? '—' : '${_meterFormat.format(latest.value)} m',
-              key: const ValueKey('sacile-latest-level'),
-              style: theme.textTheme.displayMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: alert.color,
+      clipBehavior: Clip.antiAlias,
+      child: DecoratedBox(
+        // Stessa tinta leggera delle card Meteo: qui il colore è lo
+        // stato rispetto alle soglie.
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              alert.color.withValues(alpha: 0.14),
+              alert.color.withValues(alpha: 0),
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Text(
+                'Ultimo livello misurato',
+                style: theme.textTheme.titleMedium,
               ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: alert.color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                alert.label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: alert.color,
+              const SizedBox(height: 8),
+              Text(
+                latest == null ? '—' : '${_meterFormat.format(latest.value)} m',
+                key: const ValueKey('sacile-latest-level'),
+                style: theme.textTheme.displayMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: alert.color,
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                Icon(trend.icon, size: 20, color: theme.colorScheme.primary),
-                const SizedBox(width: 6),
-                Text(trend.label, style: theme.textTheme.bodyMedium),
-                if (latest != null) ...[
-                  const SizedBox(width: 16),
-                  Icon(
-                    Icons.schedule,
-                    size: 18,
-                    color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: alert.color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  alert.label,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: alert.color,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'misura del ${_dayTimeFormat.format(latest.timestampLocal)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  Icon(trend.icon, size: 20, color: theme.colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Text(trend.label, style: theme.textTheme.bodyMedium),
+                  if (latest != null) ...[
+                    const SizedBox(width: 16),
+                    Icon(
+                      Icons.schedule,
+                      size: 18,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'misura del ${_dayTimeFormat.format(latest.timestampLocal)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

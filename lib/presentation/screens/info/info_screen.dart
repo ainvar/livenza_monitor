@@ -146,7 +146,7 @@ class _VersionSection extends StatefulWidget {
 }
 
 class _VersionSectionState extends State<_VersionSection> {
-  String _version = '1.0.0';
+  String _version = '1.2.0';
 
   @override
   void initState() {

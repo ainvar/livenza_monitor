@@ -27,8 +27,13 @@ cittadinanza in caso di piene.
   Livenza (Gorgazzo, Fiaschetti, Meschio, Noncello, Meduna…)
 - **Preferiti e dettaglio stazione** — preferenze salvate sul dispositivo,
   grafici a 6/24/48 ore su richiesta e freschezza di ogni misura
-- **Meteo** — condizioni attuali e previsioni a 7 giorni per Sacile, con
-  pioggia stimata per le ultime 24 ore e prevista nelle prossime 48
+- **Meteo** — condizioni attuali (temperatura percepita, vento con
+  direzione e raffiche, umidità, alba e tramonto), le prossime 24 ore
+  ora per ora, pioggia stimata per le ultime 24 ore e prevista nelle
+  prossime 48, andamento delle temperature e previsioni a 7 giorni con
+  dettaglio espandibile per ogni giorno (vento, ore di pioggia, UV)
+- **Affidabilità e scenari** — concordanza degli scenari ensemble sulla
+  pioggia, scenari possibili a 7 giorni e bollettino ARPA FVG – OSMER
 - **Meteo del bacino** — cinque località selezionabili, pioggia passata
   esplicitamente stimata dal modello e accesso al radar OSMER
 - **Storico** — 86 anni di dati (dal 1940): pioggia annua, confronto
@@ -45,7 +50,7 @@ cittadinanza in caso di piene.
 L'app funziona anche offline mostrando gli ultimi dati scaricati,
 segnalandone chiaramente l'età.
 
-La versione 1.1 usa le API pubbliche direttamente e salva cache e preferiti
+La versione 1.2 usa le API pubbliche direttamente e salva cache e preferiti
 sul dispositivo. Backend e notifiche rimangono nella roadmap.
 Le percentuali ensemble esprimono la concordanza degli scenari sulla
 pioggia, non l'accuratezza verificata delle previsioni.
@@ -112,6 +117,15 @@ dart run flutter_launcher_icons        # applica le icone launcher
 flutter build apk --release            # APK di release
 ```
 
+Per controllare l'aspetto delle schermate senza dispositivo, il renderer
+headless disegna ogni vista con dati finti realistici e salva un PNG per
+schermata (tema chiaro; aggiungere `--dart-define=SHOTS_DARK=true` per lo
+scuro):
+
+```bash
+flutter test tool/ui_shots.dart --dart-define=SHOTS_DIR=build/ui_shots
+```
+
 Se sul telefono è presente la versione del Play Store, la firma gestita
 da Google può impedire di sovrascriverla con un APK locale. Per una copia
 affiancata chiamata **Livenza Monitor Anteprima**, in PowerShell:
@@ -124,7 +138,7 @@ L'anteprima usa un identificativo separato e una propria cache e preferenze.
 
 ## Roadmap
 
-- [ ] Release firmata
+- [x] Release firmata e test chiuso sul Play Store
 - [ ] Backend (Cloudflare Workers) e **notifiche push** al superamento delle soglie
 - [ ] Notizie del Comune di Sacile
 - [ ] Sezione "Le grandi piene": foto e ricordi d'epoca

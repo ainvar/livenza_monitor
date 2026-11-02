@@ -67,7 +67,14 @@ void main() {
       'home_3$suffix': () => _scroll(tester, -700),
       'bacino_1$suffix': () => _tab(tester, 'Bacino'),
       'bacino_2$suffix': () => _scroll(tester, -700),
-      'meteo_1$suffix': () => _tab(tester, 'Meteo'),
+      'stazione$suffix': () async {
+        await _scrollToTop(tester);
+        await _openByText(tester, 'Fiaschetti (Caneva)');
+      },
+      'meteo_1$suffix': () async {
+        await _back(tester);
+        await _tab(tester, 'Meteo');
+      },
       'meteo_2$suffix': () => _scroll(tester, -700),
       'meteo_3$suffix': () => _scroll(tester, -700),
       'meteo_4$suffix': () => _scroll(tester, -700),
@@ -169,10 +176,9 @@ Future<void> _capture(WidgetTester tester, String name) async {
 }
 
 Future<void> _tab(WidgetTester tester, String label) async {
-  await tester.tap(find.descendant(
-    of: find.byType(NavigationBar),
-    matching: find.text(label),
-  ));
+  await tester.tap(
+    find.descendant(of: find.byType(NavigationBar), matching: find.text(label)),
+  );
   await _settle(tester, 12);
 }
 

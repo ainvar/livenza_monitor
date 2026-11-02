@@ -58,7 +58,7 @@ class AppConfig {
   static const String mapTileUrl =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   static const String mapUserAgent =
-      'LivenzaMonitor/1.1.1 (it.livenzamonitor.app)';
+      'LivenzaMonitor/1.2.0 (it.livenzamonitor.app)';
 
   /// API previsioni meteo Open-Meteo.
   static const String openMeteoBaseUrl =

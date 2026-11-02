@@ -300,7 +300,20 @@ class StationHistoryChart extends StatelessWidget {
                 isCurved: false,
                 color: theme.colorScheme.primary,
                 barWidth: 2.5,
-                dotData: const FlDotData(show: true),
+                // Con una misura ogni 15 minuti i punti coprirebbero la
+                // linea: si mostrano solo sulle finestre brevi.
+                dotData: FlDotData(show: measures.length <= 30),
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      theme.colorScheme.primary.withValues(alpha: 0.18),
+                      theme.colorScheme.primary.withValues(alpha: 0),
+                    ],
+                  ),
+                ),
               ),
             ],
             borderData: FlBorderData(show: false),
